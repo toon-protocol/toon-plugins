@@ -49,8 +49,9 @@ So, unlike what the data skills assume of a client:
 - **It has no relay of its own.** An event with no **to** goes to the relay the operator told you
   to write to. Every write is paid, at that relay's write price.
 - **It does not seal or authenticate.** Private messages (NIP-17) and private list items
-  (NIP-51) are out of its reach, and so is a private NIP-29 group (NIP-42): report it as
-  unavailable.
+  (NIP-51) are out of reach. A read that needs NIP-42 `AUTH`, such as a private NIP-29 group,
+  takes `nak req --auth` (below); a relay that wants `AUTH` before a write cannot be written to
+  through a connector, so report it as unavailable.
 - **It has no spending limit.** What a channel holds is what can be spent from it. Opening or
   topping up a channel locks the operator's funds, and `transfer` moves them out: run them only
   when the operator who gave you the task said to.
@@ -58,20 +59,20 @@ So, unlike what the data skills assume of a client:
 ## The actions, and their commands
 
 `<ilp-address>` and `<connector-url>` are the relay's, from its NIP-11 document (below). Pass
-the same `--connector` to every command: without it, a command falls back to the devnet
+the same `--connector` to every command that talks to the connector: without it, a command falls back to the devnet
 connector, with a warning.
 
 | What you need | How |
 | --- | --- |
 | Find where a relay's writes are paid for | the relay's NIP-11 document (below) |
-| Find a relay's price | `toon-client price <ilp-address> <connector-url>` |
+| Find a relay's price | `toon-client price <ilp-address> --connector <connector-url>` |
 | Read a connector's routes and prices | `toon-client describe <connector-url>` |
 | Publish a signed event (paid) | `toon-client send <ilp-address> --connector <connector-url> --json-body --body-file <file>` |
 | Pay a relay's subscribe route | `toon-client send <subscribe-address> --connector <connector-url> -H 'Authorization: Nostr <nip-98>' --json-body --body <json>` |
 | Sign an event, without publishing it | `nak event`, with the event on stdin (below) |
 | Query a relay | `nak req <ws-url>`, with the filter on stdin (below) |
 | Watch a relay | `nak req --stream <ws-url>`, with the filter on stdin (below) |
-| Your key | `printenv NOSTR_SECRET_KEY \| nak key public` |
+| Your key | `echo '{}' \| nak event \| jq -r .pubkey` |
 | Private messages | out of reach (above) |
 | Open the payment channel | `toon-client channel open --connector <connector-url> --deposit <base units>` |
 | Top up the channel (Base) | `toon-client channel deposit <base units> --connector <connector-url>` |
@@ -90,7 +91,8 @@ A relay states it in its NIP-11 document. `GET` the relay's URL, as `https://`, 
 - `connector_url`: the connector that takes the payment, such as `https://toonprotocol.dev/ilp`.
 - `price`: the write price, in the settlement token's base units.
 
-Send to that connector with `--connector`: it is where the route ends. `toon-client price <ilp-address> <connector-url>` confirms the price for free, and
+Send to that connector with `--connector`: it is where the route ends.
+`toon-client price <ilp-address> --connector <connector-url>` confirms the price for free, and
 `toon-client describe <connector-url>` lists every route the connector serves and what each
 costs. Neither needs a key or a channel. A relay with no `toon` object does not say where a
 write is paid for: tell the operator.
@@ -124,15 +126,18 @@ exits `2` saying so.
 
 ## Signing and reading with nak
 
-nak signs with the secret key in `NOSTR_SECRET_KEY`: a hex or `nsec` key, an `ncryptsec`, or a
-bunker URL. That key is your agent identity, and the operator gives it to you.
+nak signs with the secret key in `NOSTR_SECRET_KEY`: a hex or `nsec` key, or a bunker URL. That
+key is your agent identity, and the operator gives it to you. An `ncryptsec` asks for its
+password on a terminal, which a tool with no terminal cannot answer: ask the operator for
+another form.
 
 - Check that `NOSTR_SECRET_KEY` is set before you sign anything. Without it nak signs with a
   default key of its own, specific to the machine, and the event is tied to that key instead. If
   it is not set, stop and tell the operator.
 - Never pass the key as an argument (`--sec <key>`): arguments are kept in shell history and are
   readable in `ps` by everyone on the machine.
-- Your key, the public half in hex, is what `printenv NOSTR_SECRET_KEY | nak key public` prints.
+- Your key, the public half in hex, is the `pubkey` of an event nak signs:
+  `echo '{}' | nak event | jq -r .pubkey`. The event is printed, not published.
 
 Give `nak event` the data skill's **kind**, **content** and **tags** as a partial event on stdin.
 It fills in `pubkey`, `created_at` and `id`, signs, and prints the signed event:
@@ -150,6 +155,9 @@ line and returns at the end of the stored events:
 ```
 echo '{"kinds":[1],"authors":["<key>"],"limit":20}' | nak req <ws-url>
 ```
+
+A relay that answers `auth-required:` wants NIP-42 `AUTH` first: add `--auth`, and nak answers
+the challenge with your agent identity.
 
 `nak req --stream` keeps the subscription open and prints live events as they arrive, until it
 is interrupted. It does not return, so a tool with no timeout hangs on it: to read for a bounded
@@ -194,7 +202,7 @@ With `--json`, `fulfilled` is `true`, `status` is the relay's HTTP status and `t
 
 | `status` | The relay's `text` | Meaning |
 | --- | --- | --- |
-| `200` | `{"eventId":…,"storedAt":…}` | Accepted. Also the answer when the relay already held the event, or holds a newer one at the same address |
+| `200` | `{"eventId":…,"storedAt":…}` | Accepted. Also the answer when the relay already held the event, holds a newer one at the same address, or refuses it unseen (the operator blocked or retracted it) |
 | `400` | `{"error":…}` | The body is not JSON, or has no `event` |
 | `422` | `{"error":…}` | The event does not parse, or does not verify: a wrong `id` or `sig` |
 | `501` | `{"error":…}` | The relay does not store that kind yet |
@@ -232,7 +240,8 @@ Stored reads are free. A relay that sells its live feed lists `toon_subscription
 document, with the subscribe route's address and price. `toon-client` can pay that route: send
 `{"filter": <one NIP-01 filter>}` to its address, with a NIP-98 `Authorization` header signed by
 your agent identity, and each packet credits the route's price to that key. Reading the feed
-then needs NIP-42 `AUTH` with the same key, which `toon-client` does not do: read it with a Nostr
-client that does. The relay's
-[paid-feed](https://github.com/toon-protocol/relay/blob/main/docs/paid-feed.md) page has each
-step. Without both a NIP-98 signer and a NIP-42 reader, report the feed as unavailable.
+then needs NIP-42 `AUTH` with the same key: `nak req --auth --stream <ws-url>`. nak also signs
+the NIP-98 event (kind `27235`) for the header; the relay's
+[paid-feed](https://github.com/toon-protocol/relay/blob/main/docs/paid-feed.md) page says what it
+is signed over, and has each step. If you cannot build the header, report the feed as
+unavailable.
