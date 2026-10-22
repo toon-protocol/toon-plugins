@@ -31,7 +31,7 @@ The skills don't define any protocol. NIP texts, per-app guides and Nostr decisi
 
 | Plugin | Skills |
 | --- | --- |
-| `toon-nostr` | `social`, `authoring-a-nip`. The `git` skill is [#3](https://github.com/toon-protocol/toon-plugins/issues/3). |
+| `toon-nostr` | `social`, `authoring-a-nip`, `git`. |
 | `toon-cli` | `operating-an-agent-node`, and the sending skill `sending-with-toon-cli`, for `toon_cli` `>=0.3, <0.4`. |
 | `toon-client` | None yet: its sending skill is [toon-client#752](https://github.com/toon-protocol/toon-client/issues/752). |
 
