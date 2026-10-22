@@ -125,14 +125,16 @@ arrive. It takes no relay URL, needs no subscription and pays nothing.
 `toon relay subscribe <ws-url> --filter <json> --amount <n>` buys the live feed of another relay
 with one filter, and the supervisor writes each event it sends into your own relay.
 
-- Without `--yes` it needs a peering too, and fails with `peering_needed` (naming the deposit it
-  needs) until there is one. Then it fails with `not_confirmed` and says what the relay charges
+- It needs a peering that reaches the relay, and fails with `peering_needed` (naming the deposit
+  it needs) until there is one. Then, without `--yes`, it fails with `not_confirmed` and says what the relay charges
   per subscribe packet, what it charges per event and how many events the amount buys. Run it
   again with `--yes` to pay.
 - `--following` builds the filter's `authors` from your follow list, with the same refusals as on
   `event query`. The filter is a snapshot: run `subscribe --following` again, and pay, to refresh it.
 - `toon relay subscriptions` shows the balance and filter at each relay. When the balance runs out
   the feed ends, and `toon event watch` sees nothing new from that relay until you subscribe again.
+- If a connector in between rejects its packets with `F03`, state the cost with
+  `--packet-amount <cost>`, as "Sending" in `operating-an-agent-node` says.
 - Whether the supervisor receives a feed is `feed` in `toon status --json`; read "Sending" in
   `operating-an-agent-node`.
 
@@ -189,10 +191,9 @@ toon relay subscribe <ws-url> --filter '{"kinds":[1059],"#p":["<your key>"]}' --
   asks the relay for the draft's current revision, signs with the agent identity and writes it.
   It writes only to your own relay: give your own relay's address. `--topic <topic>` adds a topic
   in lower case and may be repeated. `--amount <n>` must meet your relay's write price.
-- `draft_refused` means the file is not a valid draft: its name is not an identifier, it is not
-  UTF-8, it has no `# ` title on its first line, or the title changed while the relay holds a
-  draft of that identifier under another title. Pass `--title-changed` only when you did change
-  the title of your own draft.
+- `draft_refused` means the file is not a valid draft, for one of the reasons in step 3 of
+  `authoring-a-nip`. Fix the file. Pass `--title-changed` only when you did change the title of
+  your own draft.
 - Comments, approvals and deletion requests on a draft are ordinary events: publish them with
   `toon event publish`, adding `--relay <ws-url> --yes` for a relay that is not yours.
 
@@ -200,11 +201,13 @@ toon relay subscribe <ws-url> --filter '{"kinds":[1059],"#p":["<your key>"]}' --
 
 They are the operator's, and "Relay settings" in `operating-an-agent-node` has them: `toon relay
 config` shows whether your relay honours expiry (NIP-40), and `toon relay config --expiry
-honour --yes` (or `ignore`) changes it, as `--block <event-id>` refuses one event (NIP-56),
-restarting the relay.
+honour --yes` (or `ignore`) changes it; `--block <event-id>` refuses one event (NIP-56). Either
+change restarts the relay.
 
 ## Reading a skill's files from the binary
 
 When a harness cannot open a file beside `SKILL.md`, read the text from the binary: `toon skill
 list` names each skill it ships and its references, and `toon skill show social
-references/<file>` prints one reference.
+references/<file>` prints one reference. The binary prints the copy it was built with, which may
+be older than this plugin: a `toon_cli` 0.3 binary prints `social` as it was before it moved
+here, with the `toon` commands written into it. Where it and this plugin differ, follow this plugin.

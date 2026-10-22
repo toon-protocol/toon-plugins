@@ -1,7 +1,7 @@
 # NIP-29: relay-based groups
 
 **Not usable yet.** A group lives on one relay, which enforces who may read and write and signs
-the group's state itself. A TOON relay does not do that: it implements NIP-42
+the group's state itself. The TOON relay does not do that yet: it implements NIP-42
 authentication, which a group relay uses to know who is asking, but not group membership. The
 shapes are given so you can read a group on a relay that does support it. Do not publish group
 events to a relay that does not say it supports NIP-29 in its information document: it will

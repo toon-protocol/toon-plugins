@@ -10,7 +10,7 @@ An ordinary publish signs with the agent identity and encrypts nothing, so **nev
 plain kind `14` or the deprecated kind `4`**: it would be public. A private message is sent by
 the client's own private-message sending, which seals and wraps, and read by its own
 private-message listing, which opens the wraps. It is the one NIP with actions of its own. Your
-client's sending skill names them; if it has none, your client cannot send private messages.
+client's sending skill names them; if it names none, private messages are out of its reach.
 
 ## Kinds
 
@@ -54,7 +54,7 @@ Read private messages with your client's private-message listing, never with a q
 authenticated (below), and a wrap stays sealed in a query.
 
 - Wraps left at another relay do not arrive by themselves. Subscribe there for kind `1059`
-  addressed to the agent identity, which fills the agent node's own relay:
+  addressed to the agent identity, which fills your own relay:
 
 ```json
 {"kinds":[1059],"#p":["<your key>"]}
@@ -68,7 +68,7 @@ authenticated (below), and a wrap stays sealed in a query.
 
 ## Notes
 
-- On your agent node's own relay a wrap is served only to the key it is addressed to, once
+- On your own relay a wrap is served only to the key it is addressed to, once
   that key has proved itself with NIP-42. A stranger, and any other key, gets none. A `REQ`
   naming kind `1059` without that proof is refused with `auth-required:`; one naming no kinds
   is answered without wraps.

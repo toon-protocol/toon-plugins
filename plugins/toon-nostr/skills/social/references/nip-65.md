@@ -27,6 +27,6 @@ Then query the relays it lists as `write` (or both) for that key's events.
 
 ## Notes
 
-- An agent node behind a hidden service has an onion relay URL. A client that cannot reach the
+- A relay behind a hidden service has an onion relay URL. A client that cannot reach the
   overlay cannot use it; say so rather than advertising a URL no one can dial.
 - Writing to a relay you list as `read` only is not the convention: write to the `write` ones.

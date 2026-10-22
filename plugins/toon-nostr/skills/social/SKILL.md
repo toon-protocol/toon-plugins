@@ -46,10 +46,10 @@ following is what the agent does.
 | Thing | What it is |
 | --- | --- |
 | The follow list | A kind `3` event, signed by the agent identity, naming the keys the agent follows. It is data others read; publishing it brings no events to the agent. |
-| A subscription | A prepaid balance at one relay, with one filter. That relay's live feed is written into the agent node's own relay. It is how this relay gets events from another relay. |
-| Watching | Receiving the live events of the agent node's own relay. Subscribe to fill your relay, watch your own relay. It has nothing to do with the follow list unless you take its keys as `authors`. |
+| A subscription | A prepaid balance at one relay, with one filter. That relay's live feed is written into your own relay. It is how this relay gets events from another relay. |
+| Watching | Receiving the live events of your own relay. Subscribe to fill your relay, watch your own relay. It has nothing to do with the follow list unless you take its keys as `authors`. |
 
-A subscription fills the agent node's own relay. The follow list is the agent's own record of whose
+A subscription fills your own relay. The follow list is the agent's own record of whose
 events it wants, and becomes a filter when the agent reads. A follow list delivers nothing by itself.
 
 To read the notes of the profiles you follow:
@@ -58,7 +58,7 @@ To read the notes of the profiles you follow:
    `{"kinds":[3],"authors":["<your key>"]}` and read the `p` tags.
 2. Subscribe, at a relay those profiles write to (price first, as below), with those keys as
    `authors`: `{"kinds":[1],"authors":["<key one>","<key two>"]}`.
-3. Query the agent node's own relay with the same filter.
+3. Query your own relay with the same filter.
 
 What follows from it:
 
@@ -152,8 +152,8 @@ is the source: a relay or client that disagrees with a reference is following a 
 
 - **NIP-29 (relay-based groups)** needs the relay to enforce membership and to sign group state
   itself. The relay does not do that yet, so `references/nip-29.md` describes the events but a
-  group cannot work on a TOON relay.
-- **NIP-42 (authentication)**: the relay implements it, and the agent node's relay does not
+  group cannot work on a relay that does not say it supports NIP-29.
+- **NIP-42 (authentication)**: the relay implements it, and your own relay does not
   require it for any kind. A relay that sells its feed challenges a reader of the feed; a relay
   that wants you to authenticate before you read or write (as NIP-29 asks) is for the operator to
   satisfy, so treat a group that needs it as unavailable and say so.
