@@ -1,0 +1,29 @@
+# CI. The job is named `gate`, so the AFK factory's gate runs its `run:` steps too
+# (`gateFromCi` in .sandcastle/run-gate.ts). Keep them free of `if:` and `${{ }}`: the
+# gate skips such steps.
+
+name: ci
+
+on:
+  pull_request:
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+jobs:
+  gate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.12.0'
+      - name: Test the skill-command check
+        run: node --test checks/*.test.mjs
+      # toon_cli's own gate checks only the copy of these skills it vendors at a pinned
+      # SHA, and toon-client's CI checks this repository's main unpinned, so a skill that
+      # names a command its client lacks must fail here (toon-plugins#2).
+      - name: Every command a skill names exists in its client's lowest supported version
+        run: node checks/skill-commands.mjs
