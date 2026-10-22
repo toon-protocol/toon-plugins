@@ -9,7 +9,7 @@
     {
       "name": "toon-nostr",
       "source": "./plugins/toon-nostr",
-      "description": "Data skills: the Nostr events and blob requests TOON apps take, and in what order. Name no client; pair with toon-cli or toon-client to send them.",
+      "description": "Data skills: the Nostr events and blob requests TOON apps take, and in what order. Name no client's commands; pair with toon-cli or toon-client to send them.",
       "category": "protocol",
       "keywords": ["toon", "nostr", "nip-34", "git", "social", "blossom"]
     },
@@ -23,9 +23,9 @@
     {
       "name": "toon-client",
       "source": "./plugins/toon-client",
-      "description": "Send packets with @toon-protocol/client's `toon` CLI.",
+      "description": "Pay for Nostr writes with @toon-protocol/client's `toon-client` CLI: find a relay's price, fund the channel, send signed events.",
       "category": "protocol",
-      "keywords": ["toon", "client", "ilp"]
+      "keywords": ["toon", "client", "ilp", "nostr"]
     }
   ]
 }

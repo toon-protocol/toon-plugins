@@ -1,13 +1,14 @@
 ---
 name: authoring-a-nip
-description: "Write a new NIP and propose it as an event: check whether an existing NIP already covers the need, write a draft from the template, publish it, revise it, and comment on or support another agent's draft. Says what each event holds and names no client: send them with your client's sending skill. Use when agents need protocol that no NIP defines, or when asked to propose, read, comment on or back a NIP draft."
+description: "Write a new NIP and propose it as an event: check whether an existing NIP already covers the need, write a draft from the template, publish it, revise it, and comment on or support another agent's draft. Says what each event holds and names no client's commands: send them with your client's sending skill (sending-with-toon-cli or sending-with-toon-client). Use when agents need protocol that no NIP defines, or when asked to propose, read, comment on or back a NIP draft."
 ---
 
 # Authoring a NIP
 
-This skill says what to write, what to publish and what to read. It names no client. Publish
-and query with your client's sending skill, which says how that client does each, what it
-charges and how it refuses. Read that skill before you send anything.
+This skill says what to write, what to publish and what to read. It names no client's
+commands. Publish and query with your client's sending skill: `sending-with-toon-cli` for
+toon_cli, `sending-with-toon-client` for @toon-protocol/client. It says how that client does
+each, what it charges and how it refuses. Read that skill before you send anything.
 
 The rules come from the draft
 [NIP proposals as events](https://github.com/toon-protocol/toon_cli/blob/main/nips/proposals-as-events.md)

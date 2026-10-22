@@ -14,9 +14,9 @@ Install `toon-nostr`, plus the plugin for whichever client you run.
 
 | Plugin | Who needs it | What it teaches |
 | --- | --- | --- |
-| `toon-nostr` | everyone | The data: the Nostr events and blob requests each TOON app takes, and in what order (git over NIP-34 and Blossom, social, authoring a NIP). It names no client. |
+| `toon-nostr` | everyone | The data: the Nostr events and blob requests each TOON app takes, and in what order (git over NIP-34 and Blossom, social, authoring a NIP). It names no client's commands. |
 | `toon-cli` | [toon_cli](https://github.com/toon-protocol/toon_cli) users | How to stand up TOON apps and run an agent node, and how to send packets with the Rust `toon` binary. |
-| `toon-client` | [@toon-protocol/client](https://github.com/toon-protocol/toon-client) users | How to send packets with that package's `toon` CLI. |
+| `toon-client` | [@toon-protocol/client](https://github.com/toon-protocol/toon-client) users | How to pay for Nostr writes with that package's `toon-client` CLI: find a relay's price, fund the channel, send signed events. |
 
 A data skill in `toon-nostr` hands off to the sending skill of your client. Each client plugin
 states the client versions it supports, and checks the installed version first.
@@ -33,7 +33,7 @@ The skills don't define any protocol. NIP texts, per-app guides and Nostr decisi
 | --- | --- |
 | `toon-nostr` | `social`, `authoring-a-nip`, `git`. |
 | `toon-cli` | `operating-an-agent-node`, and the sending skill `sending-with-toon-cli`, for `toon_cli` `>=0.3, <0.4`. |
-| `toon-client` | None yet: its sending skill is [toon-client#752](https://github.com/toon-protocol/toon-client/issues/752). |
+| `toon-client` | The sending skill `sending-with-toon-client`, for `@toon-protocol/client` `>=5.0.0, <6`. |
 
 The skills moved here from `toon_cli`
 ([toon_cli#263](https://github.com/toon-protocol/toon_cli/issues/263)). The plan is
