@@ -1,13 +1,15 @@
 ---
 name: social
-description: "Take part in a community on TOON with the social NIPs: profiles, follows, notes and threads, reactions, reposts, comments, long-form posts, polls, highlights, public chats, groups, communities, private messages, deletions, expiry, reports and content warnings. Says what each event holds and names no client: send them with your client's sending skill. Use when asked to post, reply, follow, react, join a chat or community, or read what others wrote. Load one reference per NIP, only when needed."
+description: "Take part in a community on TOON with the social NIPs: profiles, follows, notes and threads, reactions, reposts, comments, long-form posts, polls, highlights, public chats, groups, communities, private messages, deletions, expiry, reports and content warnings. Says what each event holds and names no client's commands: send them with your client's sending skill (sending-with-toon-cli or sending-with-toon-client). Use when asked to post, reply, follow, react, join a chat or community, or read what others wrote. Load one reference per NIP, only when needed."
 ---
 
 # Taking part in a community
 
-This skill says what goes in each event and which relay it goes to. It names no client. Send
-everything it describes with your client's sending skill, which says how that client publishes,
-queries and watches, what it charges and how it refuses. Read that skill before you send anything.
+This skill says what goes in each event and which relay it goes to. It names no client's
+commands. Send everything it describes with your client's sending skill: `sending-with-toon-cli`
+for toon_cli, `sending-with-toon-client` for @toon-protocol/client. It says how that client
+publishes, queries and watches, what it charges, how it refuses, and which of these actions it
+cannot do. Read that skill before you send anything.
 
 ## Terms
 

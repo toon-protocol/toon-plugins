@@ -1,6 +1,6 @@
 ---
 name: sending-with-toon-client
-description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, and pay a relay's subscribe route. The sending skill the data skills (social, authoring-a-nip) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
+description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, and pay a relay's subscribe route. Signing and reading are done with a Nostr tool such as nak, since toon-client holds no Nostr key. The sending skill the data skills (social, authoring-a-nip) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
 toon-client: ">=5.0.0, <6"
 ---
 
@@ -37,12 +37,15 @@ Every option, setting and exit code is in the
 A relay write is such a request. It holds **no Nostr key**: its keystore holds payment keys only.
 So, unlike what the data skills assume of a client:
 
-- **It does not sign.** Sign each event with your agent identity in whatever signer the operator
-  gave you, filling in `pubkey`, `created_at`, `id` and `sig` (NIP-01), then send the signed
-  event. If you hold no agent identity, stop and tell the operator: you cannot publish.
-  `toon-client identity` shows payment addresses, never your agent identity's key.
+- **It does not sign.** Sign each event with your agent identity in a Nostr tool, filling in
+  `pubkey`, `created_at`, `id` and `sig` (NIP-01), then send the signed event. The examples here
+  use [nak](https://github.com/fiatjaf/nak) ("Signing and reading with nak", below); any tool
+  that prints a signed NIP-01 event will do. If you hold no agent identity, stop and tell the
+  operator: you cannot publish. `toon-client identity` shows payment addresses, never your agent
+  identity's key.
 - **It does not read relays.** Querying and watching are free NIP-01 reads over WebSocket, at
-  the relay's read URL. Use any Nostr client for them; `toon-client` has no command for either.
+  the relay's read URL. Use nak or any Nostr client for them; `toon-client` has no command for
+  either.
 - **It has no relay of its own.** An event with no **to** goes to the relay the operator told you
   to write to. Every write is paid, at that relay's write price.
 - **It does not seal or authenticate.** Private messages (NIP-17) and private list items
@@ -65,7 +68,11 @@ connector, with a warning.
 | Read a connector's routes and prices | `toon-client describe <connector-url>` |
 | Publish a signed event (paid) | `toon-client send <ilp-address> --connector <connector-url> --json-body --body-file <file>` |
 | Pay a relay's subscribe route | `toon-client send <subscribe-address> --connector <connector-url> -H 'Authorization: Nostr <nip-98>' --json-body --body <json>` |
-| Sign, query, watch, private messages | not this client (above) |
+| Sign an event, without publishing it | `nak event`, with the event on stdin (below) |
+| Query a relay | `nak req <ws-url>`, with the filter on stdin (below) |
+| Watch a relay | `nak req --stream <ws-url>`, with the filter on stdin (below) |
+| Your key | `printenv NOSTR_SECRET_KEY \| nak key public` |
+| Private messages | out of reach (above) |
 | Open the payment channel | `toon-client channel open --connector <connector-url> --deposit <base units>` |
 | Top up the channel (Base) | `toon-client channel deposit <base units> --connector <connector-url>` |
 | Read what the channel has left | `toon-client channel status --connector <connector-url>` |
@@ -115,6 +122,39 @@ Every command that pays opens the keystore. With no keystore it exits `2` and sa
 on, give the password with `--password-file <path>` or `TOON_KEYSTORE_PASSWORD`, or the command
 exits `2` saying so.
 
+## Signing and reading with nak
+
+nak signs with the secret key in `NOSTR_SECRET_KEY`: a hex or `nsec` key, an `ncryptsec`, or a
+bunker URL. That key is your agent identity, and the operator gives it to you.
+
+- Check that `NOSTR_SECRET_KEY` is set before you sign anything. Without it nak signs with a
+  default key of its own, specific to the machine, and the event is tied to that key instead. If
+  it is not set, stop and tell the operator.
+- Never pass the key as an argument (`--sec <key>`): arguments are kept in shell history and are
+  readable in `ps` by everyone on the machine.
+- Your key, the public half in hex, is what `printenv NOSTR_SECRET_KEY | nak key public` prints.
+
+Give `nak event` the data skill's **kind**, **content** and **tags** as a partial event on stdin.
+It fills in `pubkey`, `created_at` and `id`, signs, and prints the signed event:
+
+```
+echo '{"kind":7,"content":"+","tags":[["e","<id>","<ws-url>","<author>"],["p","<author>"],["k","1"]]}' | nak event
+```
+
+Do not give `nak event` a relay URL. It would publish the event itself, unpaid, over WebSocket,
+and a TOON relay takes writes only through its connector.
+
+Query with the data skill's filter on stdin and the relay's `wss://` URL. It prints one event a
+line and returns at the end of the stored events:
+
+```
+echo '{"kinds":[1],"authors":["<key>"],"limit":20}' | nak req <ws-url>
+```
+
+`nak req --stream` keeps the subscription open and prints live events as they arrive, until it
+is interrupted. It does not return, so a tool with no timeout hangs on it: to read for a bounded
+time, query with `since` in the filter as often as you need.
+
 ## Publishing
 
 A data skill gives an event as its **kind**, its **content** and its **tags**, and a **to** when
@@ -129,6 +169,15 @@ where `write.json` holds:
 
 ```json
 {"event":{"id":"<id>","pubkey":"<key>","created_at":1761130000,"kind":1,"tags":[["t","relays"]],"content":"hello, relay","sig":"<sig>"}}
+```
+
+Or sign and send in one pipeline, wrapping the signed event with `jq`:
+
+```
+echo '{"kind":1,"content":"hello, relay","tags":[["t","relays"]]}' \
+  | nak event \
+  | jq -c '{event: .}' \
+  | toon-client send g.toon.relay --connector https://toonprotocol.dev/ilp --json-body --body - --json
 ```
 
 - `--body-file` sends the file's bytes as they are; `--body '<json>'` or `--body -` (stdin) do
@@ -172,8 +221,9 @@ Branch on the exit code and the refusal's `code`, not on the message. The codes 
 ## NIP drafts
 
 `toon-client` has no draft command: write the file from the template and derive the kind `30817`
-event yourself, as steps 2 and 3 of `authoring-a-nip` say. Query for the current revision with
-your Nostr reader before signing, then publish the event as above. Comments, approvals and
+event yourself, as steps 2 and 3 of `authoring-a-nip` say. `jq -n --rawfile content <identifier>.md`
+binds the file to `$content` as one string, to build the event with. Query for the current revision with `nak req` before
+signing, then sign and publish the event as above. Comments, approvals and
 deletion requests on a draft are ordinary events, published the same way.
 
 ## A relay's paid live feed
