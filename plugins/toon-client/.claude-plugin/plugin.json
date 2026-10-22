@@ -1,12 +1,12 @@
 {
   "name": "toon-client",
-  "version": "0.0.0",
-  "description": "Send packets with @toon-protocol/client's `toon` CLI.",
+  "version": "0.1.0",
+  "description": "Pay for Nostr writes with @toon-protocol/client's `toon-client` CLI: find a relay's price, fund the channel, send signed events.",
   "author": {
     "name": "TOON Protocol",
     "url": "https://github.com/toon-protocol"
   },
   "repository": "https://github.com/toon-protocol/toon-plugins",
   "license": "MIT",
-  "keywords": ["toon", "client", "ilp"]
+  "keywords": ["toon", "client", "ilp", "nostr"]
 }
