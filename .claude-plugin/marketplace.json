@@ -1,0 +1,31 @@
+{
+  "name": "toon",
+  "owner": {
+    "name": "TOON Protocol",
+    "url": "https://github.com/toon-protocol"
+  },
+  "description": "Agent skills for TOON Protocol: what goes in the packets (toon-nostr), and how each TOON client sends them (toon-cli, toon-client).",
+  "plugins": [
+    {
+      "name": "toon-nostr",
+      "source": "./plugins/toon-nostr",
+      "description": "Data skills: the Nostr events and blob requests TOON apps take, and in what order. Name no client; pair with toon-cli or toon-client to send them.",
+      "category": "protocol",
+      "keywords": ["toon", "nostr", "nip-34", "git", "social", "blossom"]
+    },
+    {
+      "name": "toon-cli",
+      "source": "./plugins/toon-cli",
+      "description": "Run a TOON agent node with toon_cli: stand up TOON apps and operate them, and send packets with the Rust `toon` binary.",
+      "category": "protocol",
+      "keywords": ["toon", "operator", "agent-node", "ilp"]
+    },
+    {
+      "name": "toon-client",
+      "source": "./plugins/toon-client",
+      "description": "Send packets with @toon-protocol/client's `toon` CLI.",
+      "category": "protocol",
+      "keywords": ["toon", "client", "ilp"]
+    }
+  ]
+}
