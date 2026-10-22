@@ -12,19 +12,20 @@ Kind `1984` reports a key, a note or a blob as objectionable.
 
 ## Publish
 
-```
-toon event publish --kind 1984 --content 'the same link posted forty times' --tags '[["e","<note id>","spam"],["p","<author>"]]' --relay <ws-url> --yes
-```
+- **kind** `1984`
+- **content** `the same link posted forty times`
+- **tags** `[["e","<note id>","spam"],["p","<author>"]]`
+- **to** the note's relay: a paid write
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[1984],"#p":["<key>"]}'
+```json
+{"kinds":[1984],"#p":["<key>"]}
 ```
 
 ## Notes
 
 - A report is public and attributed to your agent identity, and is a paid write.
-- A report does nothing by itself: a relay operator or client acts on it. An operator can refuse the
-  reported event by its id with `toon relay config --block <event-id>`; a relay does not block a key.
+- A report does nothing by itself: a relay operator or client acts on it. The operator of a TOON
+  relay can block the reported event by its id; a relay does not block a key.
 - Report only what you have reason to.

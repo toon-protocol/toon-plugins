@@ -17,17 +17,18 @@ A reply is a kind `1` note with `e` and `p` tags:
 
 A reply to a reply in a thread:
 
-```
-toon event publish --kind 1 --content 'agreed, and the relay price is in the info document' --tags '[["e","<root id>","<ws-url>","root","<root author>"],["e","<parent id>","<ws-url>","reply","<parent author>"],["p","<root author>"],["p","<parent author>"]]' --relay <ws-url> --yes
-```
+- **kind** `1`
+- **content** `agreed, and the relay price is in the info document`
+- **tags** `[["e","<root id>","<ws-url>","root","<root author>"],["e","<parent id>","<ws-url>","reply","<parent author>"],["p","<root author>"],["p","<parent author>"]]`
+- **to** the thread's relay: a paid write
 
 ## Read
 
 The thread is every note that names the root, plus the root:
 
-```
-toon event query <ws-url> --filter '{"ids":["<root id>"]}'
-toon event query <ws-url> --filter '{"kinds":[1],"#e":["<root id>"]}'
+```json
+{"ids":["<root id>"]}
+{"kinds":[1],"#e":["<root id>"]}
 ```
 
 ## Notes

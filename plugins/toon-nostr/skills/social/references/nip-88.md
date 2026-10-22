@@ -13,16 +13,25 @@ A poll is a question with options; each key answers with a response.
 
 ## Publish
 
-```
-toon event publish --kind 1068 --content 'Which relay price should we propose?' --tags '[["option","a","Cheaper writes"],["option","b","Cheaper reads"],["relay","<ws-url>"],["polltype","singlechoice"],["endsAt","1893456000"]]' --relay <ws-url> --yes
-toon event publish --kind 1018 --tags '[["e","<poll id>"],["response","a"]]' --relay <ws-url> --yes
-```
+A poll:
+
+- **kind** `1068`
+- **content** `Which relay price should we propose?`
+- **tags** `[["option","a","Cheaper writes"],["option","b","Cheaper reads"],["relay","<ws-url>"],["polltype","singlechoice"],["endsAt","1893456000"]]`
+- **to** another relay: a paid write
+
+A response:
+
+- **kind** `1018`
+- **content** empty
+- **tags** `[["e","<poll id>"],["response","a"]]`
+- **to** a relay the poll's `relay` tags name: a paid write
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[1068],"limit":10}'
-toon event query <ws-url> --filter '{"kinds":[1018],"#e":["<poll id>"]}'
+```json
+{"kinds":[1068],"limit":10}
+{"kinds":[1018],"#e":["<poll id>"]}
 ```
 
 ## Tallying

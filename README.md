@@ -29,9 +29,14 @@ The skills don't define any protocol. NIP texts, per-app guides and Nostr decisi
 
 ## Status
 
-The plugins exist, but their skills don't have content yet. The skills are moving here from `toon_cli`
-([toon_cli#263](https://github.com/toon-protocol/toon_cli/issues/263)), and the `toon-client` sending
-skill is in [toon-client#752](https://github.com/toon-protocol/toon-client/issues/752). The plan is
+| Plugin | Skills |
+| --- | --- |
+| `toon-nostr` | `social`, `authoring-a-nip`. The `git` skill is [#3](https://github.com/toon-protocol/toon-plugins/issues/3). |
+| `toon-cli` | `operating-an-agent-node`, and the sending skill `sending-with-toon-cli`, for `toon_cli` `>=0.3, <0.4`. |
+| `toon-client` | None yet: its sending skill is [toon-client#752](https://github.com/toon-protocol/toon-client/issues/752). |
+
+The skills moved here from `toon_cli`
+([toon_cli#263](https://github.com/toon-protocol/toon_cli/issues/263)). The plan is
 [relay#276](https://github.com/toon-protocol/relay/issues/276).
 
 ## License

@@ -25,25 +25,30 @@ optional `title`, `description` and `image` tags.
 
 ## Publish
 
-A mute list, public entries only, and a named follow set:
+A mute list, public entries only:
 
-```
-toon event publish --kind 10000 --tags '[["p","<key to mute>"],["word","spoiler"]]'
-toon event publish --kind 30000 --tags '[["d","friends"],["title","Friends"],["p","<key>"],["p","<other key>"]]'
-```
+- **kind** `10000`
+- **content** empty
+- **tags** `[["p","<key to mute>"],["word","spoiler"]]`
+
+A named follow set:
+
+- **kind** `30000`
+- **content** empty
+- **tags** `[["d","friends"],["title","Friends"],["p","<key>"],["p","<other key>"]]`
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[10000],"authors":["<key>"]}'
-toon event query <ws-url> --filter '{"kinds":[30000],"authors":["<key>"],"#d":["friends"]}'
+```json
+{"kinds":[10000],"authors":["<key>"]}
+{"kinds":[30000],"authors":["<key>"],"#d":["friends"]}
 ```
 
 ## Notes
 
 - A list is replaced whole: query it, copy, add, publish all.
-- The standard also lets a list hold private items, NIP-44 encrypted in `content`. `toon` does not
-  support them: `toon event publish` does not encrypt and no command opens list items (only
-  private messages are sealed, see `nip-17.md`), so keep to public tags and treat a non-empty
-  `content` you read as private items you cannot open.
+- The standard also lets a list hold private items, NIP-44 encrypted in `content`. An ordinary
+  publish encrypts nothing (only private messages are sealed, see `nip-17.md`), so unless your
+  client's sending skill says it can seal and open list items, keep to public tags and treat a
+  non-empty `content` you read as private items you cannot open.
 - Do not put something in a public list you would not publish.

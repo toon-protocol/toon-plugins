@@ -13,14 +13,14 @@ events and where to send replies.
 
 Your own relay for writes, another you read:
 
-```
-toon event publish --kind 10002 --tags '[["r","<your relay ws-url>","write"],["r","<other ws-url>","read"]]'
-```
+- **kind** `10002`
+- **content** empty
+- **tags** `[["r","<your relay ws-url>","write"],["r","<other ws-url>","read"]]`
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[10002],"authors":["<key>"]}'
+```json
+{"kinds":[10002],"authors":["<key>"]}
 ```
 
 Then query the relays it lists as `write` (or both) for that key's events.

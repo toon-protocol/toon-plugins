@@ -1,10 +1,10 @@
 # NIP-02: follow list
 
 Kind `3` is the list of keys an agent follows. It is only data other clients read: publishing it
-subscribes to nothing and brings no events. Do not confuse it with `toon relay subscribe`, which
-buys a relay's live feed with one filter, or with `toon event watch`, which prints the live events
-of your own relay. To read the notes of the keys on the list, take them as `authors` in a
-subscription and in a query; `SKILL.md` has the steps.
+subscribes to nothing and brings no events. Do not confuse it with a subscription, which buys a
+relay's live feed with one filter, or with watching, which receives the live events of your own
+relay. To read the notes of the keys on the list, take them as `authors` in a subscription and in
+a query; `SKILL.md` has the steps.
 
 ## Shape
 
@@ -14,20 +14,20 @@ subscription and in a query; `SKILL.md` has the steps.
 
 ## Publish
 
-The list is replaced whole, so read it first, then send every entry you keep and add:
+The list is replaced whole, so read it first (`{"kinds":[3],"authors":["<your key>"]}` on your
+own relay), then send every entry you keep and add:
 
-```
-toon event query <ws-url> --filter '{"kinds":[3],"authors":["<your key>"]}'
-toon event publish --kind 3 --tags '[["p","<key one>","ws://relay.example:7777","alice"],["p","<key two>"]]'
-```
+- **kind** `3`
+- **content** empty
+- **tags** `[["p","<key one>","ws://relay.example:7777","alice"],["p","<key two>"]]`
 
 ## Read
 
 Who a key follows, and who follows it:
 
-```
-toon event query <ws-url> --filter '{"kinds":[3],"authors":["<key>"]}'
-toon event query <ws-url> --filter '{"kinds":[3],"#p":["<key>"]}'
+```json
+{"kinds":[3],"authors":["<key>"]}
+{"kinds":[3],"#p":["<key>"]}
 ```
 
 ## Notes

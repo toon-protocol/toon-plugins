@@ -193,7 +193,7 @@ assume a published image meets this: the one image known to run unchanged is the
 [Adding an app](https://github.com/toon-protocol/toon_cli/blob/main/docs/guide/adding-an-app.md),
 built with `docker build`; the end-to-end run adds an app built the same way.
 
-Every app runs confined (ADR 0011): on a docker network of its own that publishes no port and
+Every app runs confined ([ADR 0011](https://github.com/toon-protocol/toon_cli/blob/main/docs/adr/0011-an-app-is-confined-and-reaches-nothing-unless-allowed.md)): on a docker network of its own that publishes no port and
 leads nowhere, as the user of the process that runs `toon`, with no capabilities, a read-only
 root filesystem (only `/data`, a 64 MB `/tmp` and scratch paths are writable), 512 MB of memory,
 1 CPU and 256 processes. `toon status --json` shows it as `confinement`. Make an allowance when
@@ -300,7 +300,7 @@ route. `toon relay describe <ws-url>` is the other direction: it prints what
 another relay charges for a write and for its live feed, and whether a peering of this agent node
 reaches it. It pays nothing and needs no passphrase or `--yes`.
 
-To sell the relay's live feed (ADR 0005), `toon relay price --subscribe <amount> --broadcast <amount>`
+To sell the relay's live feed ([ADR 0005](https://github.com/toon-protocol/toon_cli/blob/main/docs/adr/0005-a-subscription-is-a-paid-live-feed.md)), `toon relay price --subscribe <amount> --broadcast <amount>`
 sets what a subscribe packet costs and credits, on a new route of the connector, and what the relay
 debits for each event it broadcasts to a subscriber. The two come together, and a price of `0` stops
 selling. `toon relay subscriptions --incoming` asks the running relay who subscribed and what each
@@ -364,7 +364,7 @@ the relay's price is refused); treat `"complete": false` as a floor, not the who
 not raise the amount step by step.
 `toon relay subscribe <ws-url> --filter <json> --amount <n> --yes` buys the live feed of another
 relay: a prepaid balance at that relay, with one filter, drawn down for each event it sends.
-The supervisor writes those events into your own relay (ADR 0005). It needs a peering too, and
+The supervisor writes those events into your own relay ([ADR 0005](https://github.com/toon-protocol/toon_cli/blob/main/docs/adr/0005-a-subscription-is-a-paid-live-feed.md)). It needs a peering too, and
 without `--yes` it fails with `not_confirmed` and says what the relay charges. `toon relay
 subscriptions` reads the current balance from each relay, and needs no passphrase once
 `subscribe` has run; the balance in `toon status` is the last one read, with its time
@@ -387,7 +387,8 @@ and, like `event publish`, opens the keystore, so it needs the passphrase;
 `toon message list` is free: it needs no passphrase and reads what the supervisor opened. It
 fails with `agent_key_not_kept` on an agent node that keeps no agent secret yet (one made before
 the secret was kept, until a command opens the keystore). The `social` skill's
-`references/nip-17.md` has the details.
+`references/nip-17.md` says what a private message holds, and `sending-with-toon-cli` has the
+details of both commands.
 
 ### Paying an app
 

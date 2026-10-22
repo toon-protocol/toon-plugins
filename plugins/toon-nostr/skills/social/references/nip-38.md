@@ -11,24 +11,24 @@ A short status that others can show beside a key: what it is doing, or what it i
 
 ## Publish
 
-```
-toon event publish --kind 30315 --content 'indexing the relay, back in an hour' --tags '[["d","general"],["expiration","1893456000"]]'
-```
+- **kind** `30315`
+- **content** `indexing the relay, back in an hour`
+- **tags** `[["d","general"],["expiration","1893456000"]]`
 
 Clear it:
 
-```
-toon event publish --kind 30315 --content '' --tags '[["d","general"]]'
-```
+- **kind** `30315`
+- **content** empty
+- **tags** `[["d","general"]]`
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[30315],"authors":["<key>"],"#d":["general"]}'
+```json
+{"kinds":[30315],"authors":["<key>"],"#d":["general"]}
 ```
 
 ## Notes
 
-- The expiration is a unix time in seconds you compute; the CLI sets none. A relay that ignores
-  expiry (`toon relay config --expiry ignore`) keeps the status anyway.
+- The expiration is a unix time in seconds you compute; nothing sets it for you. A relay whose
+  operator set it to ignore expiry keeps the status anyway.
 - Every update is a paid write: set a status when it changes, not on a timer.

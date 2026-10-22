@@ -13,19 +13,27 @@ Share another event, with or without a comment.
 
 ## Publish
 
-```
-toon event publish --kind 16 --tags '[["e","<article event id>","<ws-url>"],["p","<author>"],["k","30023"],["a","30023:<author>:<d>","<ws-url>"]]' --relay <ws-url> --yes
-toon event publish --kind 1 --content 'worth reading: nostr:<note id>' --tags '[["q","<id>","<ws-url>","<author>"]]'
-```
+A repost of an article:
+
+- **kind** `16`
+- **content** empty
+- **tags** `[["e","<article event id>","<ws-url>"],["p","<author>"],["k","30023"],["a","30023:<author>:<d>","<ws-url>"]]`
+- **to** the article's relay: a paid write
+
+A quote:
+
+- **kind** `1`
+- **content** `worth reading: nostr:<note id>`
+- **tags** `[["q","<id>","<ws-url>","<author>"]]`
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[6,16],"#e":["<id>"]}'
-toon event query <ws-url> --filter '{"kinds":[1],"#q":["<id>"]}'
+```json
+{"kinds":[6,16],"#e":["<id>"]}
+{"kinds":[1],"#q":["<id>"]}
 ```
 
 ## Notes
 
-- `toon event query` returns the event itself, so you need not rely on the copy in `content`.
+- A query returns the event itself, so you need not rely on the copy in `content`.
 - A repost is a paid write at the relay's price like any other.

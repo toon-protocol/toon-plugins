@@ -1,7 +1,7 @@
 # NIP-29: relay-based groups
 
 **Not usable yet.** A group lives on one relay, which enforces who may read and write and signs
-the group's state itself. The relay of this build does not do that: it implements NIP-42
+the group's state itself. A TOON relay does not do that: it implements NIP-42
 authentication, which a group relay uses to know who is asking, but not group membership. The
 shapes are given so you can read a group on a relay that does support it. Do not publish group
 events to a relay that does not say it supports NIP-29 in its information document: it will
@@ -20,21 +20,30 @@ store them as ordinary events and enforce nothing.
 
 ## Publish (on a relay that supports it)
 
-```
-toon event publish --kind 9021 --tags '[["h","<group id>"]]' --relay <ws-url> --yes
-toon event publish --kind 9 --content 'hello group' --tags '[["h","<group id>"]]' --relay <ws-url> --yes
-```
+Ask to join, then write:
+
+- **kind** `9021`
+- **content** empty
+- **tags** `[["h","<group id>"]]`
+- **to** the group's relay: a paid write
+
+and
+
+- **kind** `9`
+- **content** `hello group`
+- **tags** `[["h","<group id>"]]`
+- **to** the group's relay: a paid write
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[39000],"#d":["<group id>"]}'
-toon event query <ws-url> --filter '{"kinds":[9],"#h":["<group id>"],"limit":50}'
+```json
+{"kinds":[39000],"#d":["<group id>"]}
+{"kinds":[9],"#h":["<group id>"],"limit":50}
 ```
 
 ## Notes
 
-- A private group's events are readable only after NIP-42 authentication, which `toon` cannot
-  perform. Report the group as unavailable.
+- A private group's events are readable only after NIP-42 authentication. If your client's
+  sending skill does not say it authenticates, report the group as unavailable.
 - Use `nip-28.md` for an open public channel and `nip-72.md` for a moderated community, which
   work on any relay.

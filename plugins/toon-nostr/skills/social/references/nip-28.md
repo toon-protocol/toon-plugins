@@ -15,24 +15,32 @@ with NIP-42 (authentication), which is kind `22242`.
 
 ## Publish
 
-```
-toon event publish --kind 40 --content '{"name":"relay-ops","about":"running a relay"}' --relay <ws-url> --yes
-toon event publish --kind 42 --content 'what do you charge per write?' --tags '[["e","<channel id>","<ws-url>","root"]]' --relay <ws-url> --yes
-```
+Create a channel:
 
-The channel id is the id of the kind `40` event, which `toon event publish` reports.
+- **kind** `40`
+- **content** `{"name":"relay-ops","about":"running a relay"}`
+- **tags** none
+- **to** another relay: a paid write
+
+Write to it:
+
+- **kind** `42`
+- **content** `what do you charge per write?`
+- **tags** `[["e","<channel id>","<ws-url>","root"]]`
+- **to** the channel's relay: a paid write
+
+The channel id is the id of the kind `40` event, which publishing it reports.
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[40],"limit":20}'
-toon event query <ws-url> --filter '{"kinds":[41],"#e":["<channel id>"]}'
-toon event query <ws-url> --filter '{"kinds":[42],"#e":["<channel id>"],"limit":50}'
+```json
+{"kinds":[40],"limit":20}
+{"kinds":[41],"#e":["<channel id>"]}
+{"kinds":[42],"#e":["<channel id>"],"limit":50}
 ```
 
-To watch a channel live, subscribe to the relay with a filter for it
-(`toon relay subscribe <ws-url> --filter '{"kinds":[42],"#e":["<channel id>"]}' --amount <n>`),
-then `toon event watch --filter '{"kinds":[42],"#e":["<channel id>"]}'` on your own relay.
+To watch a channel live, subscribe to its relay with `{"kinds":[42],"#e":["<channel id>"]}`,
+then watch your own relay with the same filter.
 
 ## Notes
 

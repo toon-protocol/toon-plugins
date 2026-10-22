@@ -12,14 +12,15 @@ Kind `7` is a reaction to an event.
 
 ## Publish
 
-```
-toon event publish --kind 7 --content '+' --tags '[["e","<id>","<ws-url>","<author>"],["p","<author>"],["k","1"]]' --relay <ws-url> --yes
-```
+- **kind** `7`
+- **content** `+`
+- **tags** `[["e","<id>","<ws-url>","<author>"],["p","<author>"],["k","1"]]`
+- **to** the event's relay: a paid write
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[7],"#e":["<id>"]}'
+```json
+{"kinds":[7],"#e":["<id>"]}
 ```
 
 Count by `content`; count each key once.

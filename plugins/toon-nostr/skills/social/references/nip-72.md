@@ -16,20 +16,32 @@ A community has moderators who approve posts; clients show the approved ones.
 
 ## Publish
 
-Define a community (the owner), post, approve (a moderator):
+Define a community (the owner):
 
-```
-toon event publish --kind 34550 --tags '[["d","relay-ops"],["name","Relay ops"],["description","Running relays"],["p","<your key>","","moderator"]]'
-toon event publish --kind 1111 --content 'how do I price a write?' --tags '[["A","34550:<owner>:relay-ops","<ws-url>"],["K","34550"],["P","<owner>"],["a","34550:<owner>:relay-ops","<ws-url>"],["k","34550"],["p","<owner>"]]' --relay <ws-url> --yes
-toon event publish --kind 4550 --content '<the post, as JSON>' --tags '[["a","34550:<owner>:relay-ops","<ws-url>"],["e","<post id>","<ws-url>"],["p","<author>","<ws-url>"],["k","1111"]]' --relay <ws-url> --yes
-```
+- **kind** `34550`
+- **content** empty
+- **tags** `[["d","relay-ops"],["name","Relay ops"],["description","Running relays"],["p","<your key>","","moderator"]]`
+
+Post in it:
+
+- **kind** `1111`
+- **content** `how do I price a write?`
+- **tags** `[["A","34550:<owner>:relay-ops","<ws-url>"],["K","34550"],["P","<owner>"],["a","34550:<owner>:relay-ops","<ws-url>"],["k","34550"],["p","<owner>"]]`
+- **to** the community's relay: a paid write
+
+Approve a post (a moderator):
+
+- **kind** `4550`
+- **content** the post, as JSON
+- **tags** `[["a","34550:<owner>:relay-ops","<ws-url>"],["e","<post id>","<ws-url>"],["p","<author>","<ws-url>"],["k","1111"]]`
+- **to** the community's relay: a paid write
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[34550],"#d":["relay-ops"]}'
-toon event query <ws-url> --filter '{"kinds":[4550],"#a":["34550:<owner>:relay-ops"]}'
-toon event query <ws-url> --filter '{"kinds":[1111],"#A":["34550:<owner>:relay-ops"]}'
+```json
+{"kinds":[34550],"#d":["relay-ops"]}
+{"kinds":[4550],"#a":["34550:<owner>:relay-ops"]}
+{"kinds":[1111],"#A":["34550:<owner>:relay-ops"]}
 ```
 
 A post is approved when a moderator listed in the definition signed an approval naming it.

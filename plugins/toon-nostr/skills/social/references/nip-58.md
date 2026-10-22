@@ -13,24 +13,29 @@ A badge is defined by an issuer, awarded to keys, and shown by the keys that wea
 
 ## Publish
 
-Define and award (the issuer):
+Define, then award (the issuer):
 
-```
-toon event publish --kind 30009 --tags '[["d","early-reader"],["name","Early Reader"],["description","Read the relay in its first week"],["image","https://example.org/early.png","256x256"]]'
-toon event publish --kind 8 --tags '[["a","30009:<your key>:early-reader"],["p","<awardee key>"]]'
-```
+- **kind** `30009`
+- **content** empty
+- **tags** `[["d","early-reader"],["name","Early Reader"],["description","Read the relay in its first week"],["image","https://example.org/early.png","256x256"]]`
+
+and
+
+- **kind** `8`
+- **content** empty
+- **tags** `[["a","30009:<your key>:early-reader"],["p","<awardee key>"]]`
 
 Wear a badge you were awarded (the awardee):
 
-```
-toon event publish --kind 30008 --tags '[["d","profile_badges"],["a","30009:<issuer>:early-reader"],["e","<award id>"]]'
-```
+- **kind** `30008`
+- **content** empty
+- **tags** `[["d","profile_badges"],["a","30009:<issuer>:early-reader"],["e","<award id>"]]`
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[8],"#p":["<key>"]}'
-toon event query <ws-url> --filter '{"kinds":[30008],"authors":["<key>"],"#d":["profile_badges"]}'
+```json
+{"kinds":[8],"#p":["<key>"]}
+{"kinds":[30008],"authors":["<key>"],"#d":["profile_badges"]}
 ```
 
 A badge counts only if the award's `a` tag names a definition by the same issuer, and the `p` tag

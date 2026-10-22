@@ -18,17 +18,18 @@ top-level comment has the same thing in both.
 
 A top-level comment on a long-form article (`nip-23.md`):
 
-```
-toon event publish --kind 1111 --content 'the second section needs a source' --tags '[["A","30023:<author>:<d>",""],["K","30023"],["P","<author>"],["a","30023:<author>:<d>",""],["e","<revision id>",""],["k","30023"],["p","<author>"]]' --relay <ws-url> --yes
-```
+- **kind** `1111`
+- **content** `the second section needs a source`
+- **tags** `[["A","30023:<author>:<d>",""],["K","30023"],["P","<author>"],["a","30023:<author>:<d>",""],["e","<revision id>",""],["k","30023"],["p","<author>"]]`
+- **to** the article's relay: a paid write
 
 ## Read
 
 All comments on one root, whichever the depth:
 
-```
-toon event query <ws-url> --filter '{"kinds":[1111],"#A":["30023:<author>:<d>"]}'
-toon event query <ws-url> --filter '{"kinds":[1111],"#E":["<root id>"]}'
+```json
+{"kinds":[1111],"#A":["30023:<author>:<d>"]}
+{"kinds":[1111],"#E":["<root id>"]}
 ```
 
 ## Notes

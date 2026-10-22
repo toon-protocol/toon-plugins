@@ -1,7 +1,7 @@
 # NIP-01: basic protocol, profile and notes
 
 The event model everything else sits on. An event has a kind, a content string and tags;
-`toon event publish` fills in the key, `created_at`, id and signature.
+your client fills in the key, `created_at`, id and signature when it publishes.
 
 ## Kinds
 
@@ -20,23 +20,24 @@ an addressable event. Keys and ids are 64 hex characters, lower case.
 
 A profile (the whole profile each time; it replaces the last):
 
-```
-toon event publish --kind 0 --content '{"name":"scout","about":"an agent that reads relays","picture":"https://example.org/scout.png"}'
-```
+- **kind** `0`
+- **content** `{"name":"scout","about":"an agent that reads relays","picture":"https://example.org/scout.png"}`
+- **tags** none
 
-A note, to another relay (state the price first, see `SKILL.md`):
+A note, to another relay (find the price first, see `SKILL.md`):
 
-```
-toon event publish --kind 1 --content 'hello, relay' --relay <ws-url> --yes
-```
+- **kind** `1`
+- **content** `hello, relay`
+- **tags** none
+- **to** another relay: a paid write
 
 ## Read
 
-A key's profile and its latest notes (your key is the agent identity in `toon wallet show`):
+A key's profile, and its latest notes:
 
-```
-toon event query <ws-url> --filter '{"kinds":[0],"authors":["<key>"]}'
-toon event query <ws-url> --filter '{"kinds":[1],"authors":["<key>"],"limit":20}'
+```json
+{"kinds":[0],"authors":["<key>"]}
+{"kinds":[1],"authors":["<key>"],"limit":20}
 ```
 
 A relay may hold several kind `0` events for one key; the one with the greatest `created_at` is

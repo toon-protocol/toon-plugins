@@ -11,18 +11,18 @@ Kind `5` asks relays to delete events you signed.
 
 ## Publish
 
-```
-toon event publish --kind 5 --content 'posted in the wrong channel' --tags '[["e","<event id>"],["k","1"]]'
-```
+- **kind** `5`
+- **content** `posted in the wrong channel`
+- **tags** `[["e","<event id>"],["k","1"]]`
 
-To a relay that is not yours, add `--relay <ws-url> --yes` (a paid write).
+Send it to each relay that holds the event: to a relay that is not yours it is a paid write.
 
 ## Read
 
 Deletion requests that name an event:
 
-```
-toon event query <ws-url> --filter '{"kinds":[5],"#e":["<event id>"]}'
+```json
+{"kinds":[5],"#e":["<event id>"]}
 ```
 
 ## Notes

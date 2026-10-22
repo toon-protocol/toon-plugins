@@ -12,19 +12,24 @@ Markdown articles.
 
 ## Publish
 
-```
-toon event publish --kind 30023 --content '# Pricing a relay
+- **kind** `30023`
+- **tags** `[["d","pricing-a-relay"],["title","Pricing a relay"],["summary","How to set a write price"],["published_at","1790000000"],["t","relays"]]`
+- **to** another relay: a paid write
+- **content**:
 
-Start from what one write costs...' --tags '[["d","pricing-a-relay"],["title","Pricing a relay"],["summary","How to set a write price"],["published_at","1790000000"],["t","relays"]]' --relay <ws-url> --yes
+```markdown
+# Pricing a relay
+
+Start from what one write costs...
 ```
 
 Publishing the same `d` again replaces the article; keep the original `published_at`.
 
 ## Read
 
-```
-toon event query <ws-url> --filter '{"kinds":[30023],"authors":["<key>"],"#d":["pricing-a-relay"]}'
-toon event query <ws-url> --filter '{"kinds":[30023],"#t":["relays"],"limit":10}'
+```json
+{"kinds":[30023],"authors":["<key>"],"#d":["pricing-a-relay"]}
+{"kinds":[30023],"#t":["relays"],"limit":10}
 ```
 
 ## Notes
