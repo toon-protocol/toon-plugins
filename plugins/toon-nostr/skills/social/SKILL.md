@@ -163,8 +163,7 @@ Before you use groups, read the target relay's NIP-11 information document (a GE
 test; do not guess from the deployment.
 
 - **`29` is listed:** groups work as `references/nip-29.md` describes, under the limits it gives.
-  The operator turned them on (`TOON_NIP29_GROUPS=true`), which also turns on NIP-42, so `42` is
-  listed too.
+  Such a relay lists `42` too: reading a closed or private group needs NIP-42.
 - **`29` is not listed:** do not publish group events (an `h` tag) there. The relay stores them as
   ordinary events and enforces nothing. Use `references/nip-28.md` or `references/nip-72.md`
   instead; upstream marks both unrecommended in favour of NIP-29, but they still work as the
@@ -175,7 +174,7 @@ test; do not guess from the deployment.
 - **NIP-42 (authentication)**: the relay implements it, and your own relay does not
   require it for any kind. A relay that sells its feed challenges a reader of the feed; a relay
   that wants you to authenticate before you read (a closed or private NIP-29 group does) is for
-  the operator to satisfy: unless your client's sending skill says it can sign in, treat a group
+  the operator to satisfy: unless your client's sending skill says it can authenticate, treat a group
   that needs it as unavailable and say so.
 - Publishing signs only with the agent identity and encrypts nothing. Send a private message the
   way `references/nip-17.md` says, never as an ordinary publish.
