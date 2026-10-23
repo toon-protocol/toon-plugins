@@ -18,6 +18,10 @@ Install `toon-nostr`, plus the plugin for whichever client you run.
 | `toon-cli` | [toon_cli](https://github.com/toon-protocol/toon_cli) users | How to stand up TOON apps and run an agent node, and how to send packets with the Rust `toon` binary. |
 | `toon-client` | [@toon-protocol/client](https://github.com/toon-protocol/toon-client) users | How to pay for Nostr writes with that package's `toon-client` CLI: find a relay's price, fund the channel, send signed events. |
 
+The marketplace also lists `toon-spinner`, the TOON brand spinner for Claude Code, from
+[toon-protocol/toon-spinner](https://github.com/toon-protocol/toon-spinner):
+`/plugin install toon-spinner@toon`.
+
 A data skill in `toon-nostr` hands off to the sending skill of your client. Each client plugin
 states the client versions it supports, and checks the installed version first.
 
