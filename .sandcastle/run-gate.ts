@@ -128,6 +128,16 @@ export async function loadGate(sandbox: Sandbox, base: string): Promise<Gate> {
 }
 
 /**
+ * Wrap a step so it fails on any error and, where bash exists, on a failed pipe
+ * stage. POSIX sh (dash) has no pipefail and dies on `set -o pipefail`, so the
+ * option is only ever passed to bash.
+ */
+function shellWrap(command: string): string {
+  const quoted = `'${command.replace(/'/g, `'\\''`)}'`;
+  return `if command -v bash >/dev/null 2>&1; then exec bash -e -o pipefail -c ${quoted}; fi\nset -e\n${command}`;
+}
+
+/**
  * Run `steps` in order, stopping at the first failure.
  *
  * Failure is returned, not thrown, so the caller can decide between a fix
@@ -139,7 +149,7 @@ export async function runGate(sandbox: Sandbox, steps: readonly GateStep[]): Pro
   for (const step of steps) {
     console.log(`  [gate] ${step.name}: ${step.command}`);
     const lines: string[] = [];
-    const result = await sandbox.exec(`set -e\n(set -o pipefail) 2>/dev/null && set -o pipefail\n${step.command}`, {
+    const result = await sandbox.exec(shellWrap(step.command), {
       onLine: (line) => {
         lines.push(line);
         // Stream sparingly: full build output would bury the runner log.
