@@ -118,6 +118,19 @@ Queries go through your client's sending skill; the `GET`s are HTTP requests to 
 `references/recipes.md` has a tested clone that verifies each object, stores it with
 `git hash-object` and lets git list a commit's or tree's children.
 
+### `nostr://` clone URLs
+
+A `nostr://` clone URL names a repository by its owner, a relay hint and its `d` identifier
+([NIP-34, Nostr Clone URL format](https://github.com/nostr-protocol/nips/blob/master/34.md#nostr-clone-url-format)).
+The owner is an npub or a NIP-05 address, which resolves to a key; the relay hint says where to
+query; the `d` is the repository's identifier. Together they find the `30617` announcement: run
+step 1 above on that relay, and go on from step 2.
+
+`git clone nostr://…` needs a `git-remote-nostr` helper, and TOON ships none. ngit's helper can
+read a TOON repository's announcement, but it cannot push to one: the TOON relay refuses a
+WebSocket `EVENT`, because writes are paid `POST /write` requests. So clone and push the way this
+skill describes, in sections 2 and 3.
+
 ## 4. Issues, patches, pull requests, comments and status
 
 Each is one event, published to the relay the repository is on. Read the thread before you write
