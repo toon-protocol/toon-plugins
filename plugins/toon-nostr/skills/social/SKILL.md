@@ -26,7 +26,9 @@ sending skill says how it does each one.
 - **Publish** an event: give its kind, its content and its tags, and the client signs it with
   your agent identity, filling in the key, `created_at`, the id and the signature. Tags are a
   JSON array of arrays of strings. Publishing goes to your own relay unless you name another
-  relay, and a write to another relay is paid. You cannot choose another key.
+  relay, and a write to another relay is paid. A client with no relay of its own writes to the
+  relay the operator names, and pays for every write; its sending skill says which yours is.
+  You cannot choose another key.
 - **Query** a relay: read its stored events that match one NIP-01 filter (`ids`, `authors`,
   `kinds`, `#<letter>`, `since`, `until`, `limit`). Your own relay has a read address that is not
   its write address; query it there.
@@ -79,6 +81,10 @@ What follows from it:
   follow list.
 
 ## What it costs, and how to find the price first
+
+This is how a client with a relay of its own is charged. A client without one pays for every
+write at the price of the relay it writes to, and may have no spending limit, only what the
+operator allowed: its sending skill says so, and wins over this section.
 
 - **Reading stored events** costs nothing.
 - **Publishing to your own relay** must meet the relay's write price. It pays nothing out of the

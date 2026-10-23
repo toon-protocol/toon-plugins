@@ -1,13 +1,13 @@
 ---
 name: sending-with-toon-client
-description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, and pay a relay's subscribe route. Signing and reading are done with a Nostr tool such as nak, since toon-client holds no Nostr key. The sending skill the data skills (social, authoring-a-nip) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
+description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, send a private message, upload a blob to a TOON Blossom server, and pay a relay's subscribe route. Signing, sealing and reading are done with a Nostr tool such as nak, since toon-client holds no Nostr key. The sending skill the data skills (social, authoring-a-nip, git) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
 toon-client: ">=5.0.0, <6"
 ---
 
 # Sending with toon-client
 
-The data skills (`social`, `authoring-a-nip`) say what goes in an event and which relay it goes
-to, and name no client. This skill says how `toon-client`, the binary of
+The data skills (`social`, `authoring-a-nip`, `git`) say what goes in an event and which relay it
+goes to, and name no client. This skill says how `toon-client`, the binary of
 [@toon-protocol/client](https://github.com/toon-protocol/toon-client), does each thing they ask
 for. It says nothing about what an event holds: that is the data skill's.
 
@@ -47,14 +47,20 @@ So, unlike what the data skills assume of a client:
   the relay's read URL. Use nak or any Nostr client for them; `toon-client` has no command for
   either.
 - **It has no relay of its own.** An event with no **to** goes to the relay the operator told you
-  to write to. Every write is paid, at that relay's write price.
-- **It does not seal or authenticate.** Private messages (NIP-17) and private list items
-  (NIP-51) are out of reach. A read that needs NIP-42 `AUTH`, such as a private NIP-29 group,
+  to write to. Every write is paid, at that relay's write price. Wherever a data skill or
+  reference says *your own relay*, read *the relay the operator named*. It is still another
+  relay in every other sense: it may serve what you write to anyone.
+- **It does not seal or authenticate.** nak does: a private message (NIP-17) is sealed and
+  wrapped with `nak gift wrap`, and the wrap is sent like any other event ("Private messages",
+  below). Private list items (NIP-51) are not covered here. A read that needs NIP-42 `AUTH`
   takes `nak req --auth` (below); a relay that wants `AUTH` before a write cannot be written to
   through a connector, so report it as unavailable.
-- **It has no spending limit.** What a channel holds is what can be spent from it. Opening or
-  topping up a channel locks the operator's funds, and `transfer` moves them out: run them only
-  when the operator who gave you the task said to.
+- **It has no spending limit.** What a channel holds is what can be spent from it, so keep your
+  own count against what the operator allowed: each `send --json` reports `claim.amount` (this
+  payment) and `claim.cumulative` (everything signed on the channel so far). Where a data skill
+  says to read the spending limit, read the operator's allowance and `channel status` instead.
+  Opening or topping up a channel locks the operator's funds, and `transfer` moves them out: run
+  them only when the operator who gave you the task said to.
 
 ## The actions, and their commands
 
@@ -73,10 +79,12 @@ connector, with a warning.
 | Query a relay | `nak req <ws-url>`, with the filter on stdin (below) |
 | Watch a relay | `nak req --stream <ws-url>`, with the filter on stdin (below) |
 | Your key | `echo '{}' \| nak event \| jq -r .pubkey` |
-| Private messages | out of reach (above) |
+| Send a private message (paid, one write per wrap) | `nak gift wrap`, then `toon-client send` ("Private messages", below) |
+| Read your private messages | `nak req --auth <ws-url>`, then `nak gift unwrap` (below) |
+| Upload a blob to a TOON Blossom server (paid) | `toon-client send <upload-address> --connector <connector-url> --method PUT -H 'Authorization: Nostr <kind 24242>' --body-file <file>` ("Uploading to a Blossom server", below) |
 | Open the payment channel | `toon-client channel open --connector <connector-url> --deposit <base units>` |
 | Top up the channel (Base) | `toon-client channel deposit <base units> --connector <connector-url>` |
-| Read what the channel has left | `toon-client channel status --connector <connector-url>` |
+| Read what the channel holds and what you have signed | `toon-client channel status --connector <connector-url>` |
 | Read what the connector has claimed | `toon-client claim-state --connector <connector-url>` |
 | Learn a path's cost, paying nothing | `toon-client probe <ilp-address> --connector <connector-url>` |
 | Read the chain balances | `toon-client balances` |
@@ -97,6 +105,21 @@ Send to that connector with `--connector`: it is where the route ends.
 costs. Neither needs a key or a channel. A relay with no `toon` object does not say where a
 write is paid for: tell the operator.
 
+- **Reading is free and goes to the same host.** The relay's read address is its URL as
+  `wss://` (for `https://relay.toonprotocol.dev`, `wss://relay.toonprotocol.dev`). Only writes go
+  through the connector.
+- **What one send costs.** A route lists `price`, and may list `pricePerKib`; only `--json`
+  shows `pricePerKib` (`toon-client describe <connector-url> --json`, or
+  `toon-client price <ilp-address> --connector <connector-url> --json`). One send costs
+  `price + pricePerKib × ⌈bytes / 1024⌉`, where the bytes are the whole HTTP request the packet
+  carries: the body **and** its headers, so a long `Authorization` header counts, plus a few
+  hundred bytes the client adds. To bound a budget, count one KiB more than the body and your
+  headers fill. A route with no
+  `pricePerKib` (a relay's write route) is flat: every event costs `price`, whatever its size.
+- **A route may name its carriage.** `describe` shows `requiredTransport` (and NIP-11 shows
+  `carriage`), such as `btp` for a relay's writes. The default `--transport auto` honours it;
+  leave it.
+
 ## Paying for writes: the channel
 
 `toon-client send` pays from a channel with the connector and never opens one by itself. The
@@ -107,8 +130,9 @@ toon-client channel open --connector https://toonprotocol.dev/ilp --deposit 1000
 ```
 
 - `--deposit` is in the token's base units: `100000` is 0.10 USDC. Opening costs no gas.
-- `toon-client channel status` shows each channel's deposit, what you have signed and what is
-  left. When it runs out, sends exit `4` again; `toon-client channel deposit <base units>` tops
+- `toon-client channel status` shows each channel's `depositTotal` and what you have `signed`;
+  what is left is the one less the other. `toon-client claim-state` shows it directly, as
+  `available`. When it runs out, sends exit `4` again; `toon-client channel deposit <base units>` tops
   up a Base channel, and a Solana channel is replaced by a fresh one on the next payment.
 - On the devnet, `toon-client faucet` drips test funds onto this keystore's address;
   `toon-client balances` shows what the wallet holds.
@@ -119,10 +143,13 @@ toon-client channel open --connector https://toonprotocol.dev/ilp --deposit 1000
 - Leaving a channel (`toon-client channel close`, then `toon-client channel settle` once its
   window has passed) costs native gas. It is the operator's decision, not a data skill's.
 
-Every command that pays opens the keystore. With no keystore it exits `2` and says to run
-`toon-client init`: setting one up is the operator's, so tell them. With no terminal to prompt
-on, give the password with `--password-file <path>` or `TOON_KEYSTORE_PASSWORD`, or the command
-exits `2` saying so.
+Every command that pays needs the operator's payment keys: `TOON_MNEMONIC` when the operator has
+set it, else the keystore (`TOON_KEYSTORE`, default `~/.toon/keystore.json`). With neither it
+exits `2` and says to run `toon-client init`: setting one up is the operator's, so tell them. A
+keystore needs its password: with no terminal to prompt on, give it with
+`--password-file <path>` or `TOON_KEYSTORE_PASSWORD`, or the command exits `2` saying so.
+`TOON_CHANNEL_STORE` (default `~/.toon/channels.json`) is where your signed total for each
+channel is kept: keep it, or the client loses count of what it has signed.
 
 ## Signing and reading with nak
 
@@ -153,8 +180,11 @@ Query with the data skill's filter on stdin and the relay's `wss://` URL. It pri
 line and returns at the end of the stored events:
 
 ```
-echo '{"kinds":[1],"authors":["<key>"],"limit":20}' | nak req <ws-url>
+echo '{"kinds":[1],"authors":["<key>"],"limit":20}' | nak req <ws-url> 2>/dev/null
 ```
+
+nak writes progress (`connecting to … ok.`) to stderr: keep stderr out of anything that parses
+its output.
 
 A relay that answers `auth-required:` wants NIP-42 `AUTH` first: add `--auth`, and nak answers
 the challenge with your agent identity.
@@ -198,11 +228,12 @@ echo '{"kind":1,"content":"hello, relay","tags":[["t","relays"]]}' \
 ## Reading the answer
 
 The status `toon-client send` prints is **the relay's own**, and it is paid for whatever it is.
-With `--json`, `fulfilled` is `true`, `status` is the relay's HTTP status and `text` its body:
+With `--json`, `fulfilled` is `true`, `status` is the relay's HTTP status and `text` its body
+(`body` is the same bytes in base64):
 
 | `status` | The relay's `text` | Meaning |
 | --- | --- | --- |
-| `200` | `{"eventId":…,"storedAt":…}` | Accepted. Also the answer when the relay already held the event, holds a newer one at the same address, or refuses it unseen (the operator blocked or retracted it) |
+| `200` | `{"eventId":…,"storedAt":…,"payment":…}` | Accepted. Also the answer when the relay already held the event, holds a newer one at the same address, or refuses it unseen (the operator blocked or retracted it) |
 | `400` | `{"error":…}` | The body is not JSON, or has no `event` |
 | `422` | `{"error":…}` | The event does not parse, or does not verify: a wrong `id` or `sig` |
 | `501` | `{"error":…}` | The relay does not store that kind yet |
@@ -228,11 +259,126 @@ Branch on the exit code and the refusal's `code`, not on the message. The codes 
 
 ## NIP drafts
 
-`toon-client` has no draft command: write the file from the template and derive the kind `30817`
-event yourself, as steps 2 and 3 of `authoring-a-nip` say. `jq -n --rawfile content <identifier>.md`
-binds the file to `$content` as one string, to build the event with. Query for the current revision with `nak req` before
-signing, then sign and publish the event as above. Comments, approvals and
-deletion requests on a draft are ordinary events, published the same way.
+`toon-client` has no draft command: fetch the
+[template](https://raw.githubusercontent.com/toon-protocol/toon_cli/main/nips/TEMPLATE.md), write
+the file from it, then derive the kind `30817` event yourself, as steps 2 and 3 of
+`authoring-a-nip` say. This bash script builds the unsigned event in `draft.json` from
+`<identifier>.md`. It asks the relay for the current revision first, stops on a file that is not
+a draft or on a title that differs from the current revision's, and adds the topics you give:
+
+```
+set -e; f=<identifier>.md; relay=<ws-url>; topics='["<topic>"]'; renamed=no
+id=$(basename "$f" .md); title=$(head -n1 "$f" | sed -n 's/^# //p'); key=$(echo '{}' | nak event | jq -r .pubkey)
+[[ $id =~ ^[a-z0-9-]{1,64}$ ]] && [ -n "$title" ] && iconv -f UTF-8 -t UTF-8 "$f" >/dev/null \
+  || { echo "refuse: the name, the '# ' title or the UTF-8 of $f"; exit 1; }
+current=$(echo "{\"kinds\":[30817],\"authors\":[\"$key\"],\"#d\":[\"$id\"]}" \
+  | nak req "$relay" 2>/dev/null | jq -s 'sort_by(.created_at, (.id | explode | map(-.))) | last')
+prev=$(jq -r '.created_at // 0' <<<"$current"); was=$(jq -r '.tags[]? | select(.[0]=="title") | .[1]' <<<"$current")
+[ -z "$was" ] || [ "$was" = "$title" ] || [ "$renamed" = yes ] \
+  || { echo "refuse: the relay holds $id under the title '$was'"; exit 1; }
+summary=$(awk 'p && /^[[:space:]]*$/ { if (s != "") exit; next } p { s = s (s ? " " : "") $0 }
+  /^`draft`/ { p = 1 } END { if (s !~ /^<!--/) print s }' "$f")
+kinds=$(awk '/^## / { k = ($0 == "## Kinds") } k && /This draft[[:space:]]*\|[[:space:]]*$/ {
+  split($0, c, "|"); gsub(/[`[:space:]]/, "", c[2]); gsub(/^[[:space:]]+|[[:space:]]+$/, "", c[3]); print c[2] "\t" c[3] }' "$f")
+now=$(date +%s); at=$(( now > prev ? now : prev + 1 ))
+jq -n --rawfile content "$f" --arg d "$id" --arg title "$title" --arg summary "$summary" \
+  --arg kinds "$kinds" --argjson at "$at" --argjson topics "$topics" '{kind: 30817, created_at: $at,
+  content: $content, tags: ([["d", $d], ["title", $title]]
+    + ($kinds | split("\n") | map(select(. != "") | split("\t") | ["k", .[0], .[1]]))
+    + (if $summary == "" then [] else [["summary", $summary]] end)
+    + ($topics | map(["t", .])))}' > draft.json
+```
+
+- A refusal over the title means the identifier belongs to another draft: choose another. Set
+  `renamed=yes` only when you did change the title of your own draft.
+- `nak event` keeps the `created_at` it is given, so the revision rule holds:
+  `nak event < draft.json | jq -c '{event: .}'`, then send it as above.
+- Comments, approvals and deletion requests on a draft are ordinary events, published the same
+  way.
+
+## Private messages
+
+A private message (NIP-17) is a kind `14` that is never published as it is. nak seals it to the
+recipient and wraps it under a one-time key, and the wrap (kind `1059`) is what you send. The
+`social` skill's `references/nip-17.md` says what the message holds and where the wraps go.
+
+1. Write the kind `14` with `nak event`, which prints it and sends it nowhere:
+
+   ```
+   echo '{"kind":14,"content":"hi","tags":[["p","<recipient>"]]}' | nak event > message.json
+   ```
+
+2. Wrap it once for each recipient, and once for yourself so you keep a copy. Each wrap is one
+   paid write:
+
+   ```
+   for to in <recipient> <your key>; do
+     nak gift wrap -p "$to" < message.json \
+       | jq -c '{event: .}' \
+       | toon-client send <ilp-address> --connector <connector-url> --json-body --body - --json
+   done
+   ```
+
+   `nak gift wrap` seals with your agent identity (`NOSTR_SECRET_KEY`) and signs the wrap with a
+   fresh key, so the relay sees neither the sender nor the text. It notes on stderr which keys it
+   used.
+
+   Before the first wrap, check that the relay keeps wraps private, as `references/nip-17.md`
+   says: `echo '{"kinds":[1059],"limit":1}' | nak req <ws-url>`, with no `--auth`. If it returns
+   a wrap rather than `auth-required:`, anyone can see who you message, and when: tell the
+   operator before you send.
+
+3. Read yours: query for wraps addressed to you, with `AUTH`, since a relay may serve a wrap only
+   to the key it is addressed to, and open them:
+
+   ```
+   echo '{"kinds":[1059],"#p":["<your key>"]}' | nak req --auth <ws-url> 2>/dev/null | nak gift unwrap
+   ```
+
+   Each line out is a message: its `pubkey` is the sender, read from inside the seal.
+
+Never send the kind `14` itself, or a kind `4`: either would be public.
+
+## Uploading to a Blossom server
+
+A TOON Blossom server takes an upload only as a paid request through a connector. A `PUT /upload`
+sent straight to the server is refused with `403` (`uploads go through TOON`). Reads
+(`GET` or `HEAD /<sha256>`) and the free preflight `HEAD /upload` go straight to the server over
+`https`, with no payment.
+
+1. **Find the upload route.** The server does not say which connector sells its uploads. Read
+   `toon-client describe <connector-url>`, for the connector the operator named or else the
+   connector of the relay you write to. Then look for a route ending in `.blossom.upload` (on
+   the devnet, `g.toon.blossom.upload` at `https://toonprotocol.dev/ilp`). If there is none,
+   tell the operator and upload nothing.
+2. **Sign the authorization** (kind `24242`), as the data skill says, and encode it as unpadded
+   base64url. It goes in the header and is never published:
+
+   ```
+   AUTH=$(echo '{"kind":24242,"content":"Upload <name>","tags":[["t","upload"],["x","<blob id>"],["expiration","<unix time>"]]}' \
+     | nak event | base64 -w0 | tr '+/' '-_' | tr -d '=')
+   ```
+
+3. **Send the bytes**, as they are:
+
+   ```
+   toon-client send g.toon.blossom.upload --connector https://toonprotocol.dev/ilp --method PUT \
+     -H "Authorization: Nostr $AUTH" -H 'X-SHA-256: <blob id>' -H 'Content-Type: application/octet-stream' \
+     --body-file <file> --json
+   ```
+
+   - Leave out `--json-body`: the body is the raw bytes.
+   - `status` `201` is accepted. The `text` is the blob descriptor; check that its `sha256` is
+     your blob id.
+   - A `4xx` is the server's refusal, paid like any answer. The `text` says why: an
+     authorization with no matching `x`, an expired authorization, a hash that does not match.
+
+- **Cost.** Each upload costs the route's `price` plus `pricePerKib` for each started KiB of the
+  whole request, and the `Authorization` header counts. One blob id per authorization keeps the
+  header small. An authorization that lists many `x` tags is paid for again on every upload that
+  carries it.
+- **Renewing.** Uploading identical bytes again is a new paid upload. On a TOON Blossom server it
+  extends what you hold: see the server's own rules for how long.
 
 ## A relay's paid live feed
 
