@@ -14,9 +14,10 @@ push, open a PR or close the issue. The runner does all three once you finish.
   touches them. Where an ADR and another document disagree, the ADR wins. Use the
   glossary's terms.
 - This repository is a Claude Code plugin marketplace of agent skills for TOON Protocol,
-  not a program. `README.md` explains it. `.claude-plugin/marketplace.json` lists three
-  plugins, and each lives in `plugins/<name>/`, with its manifest in
-  `.claude-plugin/plugin.json` and its skills in `skills/`. Nothing builds and there is no
+  not a program. `README.md` explains it. `.claude-plugin/marketplace.json` lists four
+  plugins. Three live here, each in `plugins/<name>/`, with its manifest in
+  `.claude-plugin/plugin.json` and its skills in `skills/`; `toon-spinner` comes from
+  `toon-protocol/toon-spinner`. Nothing builds and there is no
   package manager: the work is Markdown skills and JSON manifests. `.sandcastle/` is the
   factory, not part of a plugin.
 - `toon-nostr` holds the data skills and names no client. `toon-cli` and `toon-client`

@@ -4,7 +4,7 @@
     "name": "TOON Protocol",
     "url": "https://github.com/toon-protocol"
   },
-  "description": "Agent skills for TOON Protocol: what goes in the packets (toon-nostr), and how each TOON client sends them (toon-cli, toon-client).",
+  "description": "Agent skills for TOON Protocol: what goes in the packets (toon-nostr), and how each TOON client sends them (toon-cli, toon-client). Also the TOON brand spinner (toon-spinner).",
   "plugins": [
     {
       "name": "toon-nostr",
@@ -26,6 +26,16 @@
       "description": "Pay for Nostr writes with @toon-protocol/client's `toon-client` CLI: find a relay's price, fund the channel, send signed events.",
       "category": "protocol",
       "keywords": ["toon", "client", "ilp", "nostr"]
+    },
+    {
+      "name": "toon-spinner",
+      "source": {
+        "source": "github",
+        "repo": "toon-protocol/toon-spinner"
+      },
+      "description": "TOON Protocol brand spinner for Claude Code (terminal and desktop app).",
+      "category": "appearance",
+      "keywords": ["toon", "spinner", "brand"]
     }
   ]
 }
