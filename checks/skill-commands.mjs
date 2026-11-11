@@ -7,13 +7,37 @@
 // at the low end of the range its sending skill's frontmatter states (toon from the
 // toon_cli release, toon-client from npm) and runs `--help` on every command the skills
 // name. It needs network access, curl, tar and npm.
+//
+// WHAT IT IS ALLOWED TO RUN
+// -------------------------
+// This check executes code it downloads, and the AFK factory runs it inside a sandbox
+// that holds a GitHub write token and a Claude credential. So:
+//
+//   - It runs only bytes this repository pins. A toon_cli archive must match the SHA-256
+//     in checks/client-pins.json. toon-client installs with `npm ci` from the lockfile in
+//     checks/clients/toon-client-<version>/, which pins every package by integrity hash.
+//     A version with no pin fails the check; it is never fetched on trust.
+//   - It runs them with an environment of PATH and an empty HOME, nothing else, so a
+//     token in the caller's environment is not handed to them.
+//
+// WHEN A SKILL'S LOWER BOUND MOVES, add the pin in the same change:
+//
+//   toon         gh api repos/toon-protocol/toon_cli/releases/tags/v<version> \
+//                  --jq '.assets[] | [.name, .digest] | @tsv'
+//                and copy both linux archive digests into checks/client-pins.json.
+//   toon-client  copy checks/clients/toon-client-<old>/package.json to
+//                checks/clients/toon-client-<version>/, set the version, and run
+//                `npm install --package-lock-only --ignore-scripts` there.
 
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
-import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
+import { copyFileSync, existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
 import { arch, tmpdir } from 'node:os';
-import { join } from 'node:path';
+import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
+
+/** The directory this file is in: where the pins and lockfiles live. */
+const CHECKS = dirname(fileURLToPath(import.meta.url));
 
 /**
  * The plugins that are a client's: the binary its skills may name, and the sending skill
@@ -165,8 +189,71 @@ function skillFiles(root, plugin) {
     .sort();
 }
 
+/**
+ * The SHA-256 this repository pins for a toon_cli release archive. Throws when there is
+ * none, so an unpinned archive is never downloaded and run.
+ *
+ * @param {{ toon?: Record<string, Record<string, string>> }} pins the parsed client-pins.json
+ * @param {string} version
+ * @param {string} asset the archive's file name
+ * @returns {string}
+ */
+export function pinnedSha256(pins, version, asset) {
+  const sha256 = pins.toon?.[version]?.[asset];
+  if (sha256 === undefined) {
+    throw new Error(
+      `checks/client-pins.json has no SHA-256 for ${asset}. Add the digest GitHub reports for` +
+        ` that asset of toon_cli v${version} (see the top of checks/skill-commands.mjs).`,
+    );
+  }
+  if (!/^[0-9a-f]{64}$/.test(sha256)) {
+    throw new Error(`checks/client-pins.json: the entry for ${asset} is not a SHA-256.`);
+  }
+  return sha256;
+}
+
+/**
+ * The directory holding the committed package.json and package-lock.json for a
+ * toon-client version. Throws when there is none, or when its lockfile pins another
+ * version, so toon-client is never installed from an unpinned tree.
+ *
+ * @param {string} checks the `checks` directory
+ * @param {string} version
+ * @returns {string}
+ */
+export function lockedClient(checks, version) {
+  const dir = join(checks, 'clients', `toon-client-${version}`);
+  const lockfile = join(dir, 'package-lock.json');
+  if (!existsSync(lockfile) || !existsSync(join(dir, 'package.json'))) {
+    throw new Error(
+      `checks/clients has no lockfile for toon-client ${version}. Add` +
+        ` checks/clients/toon-client-${version}/ (see the top of checks/skill-commands.mjs).`,
+    );
+  }
+  const locked = JSON.parse(readFileSync(lockfile, 'utf8')).packages?.['node_modules/@toon-protocol/client']?.version;
+  if (locked !== version) {
+    throw new Error(`${lockfile} pins @toon-protocol/client ${locked}, not ${version}.`);
+  }
+  return dir;
+}
+
+/**
+ * The whole environment a downloaded client runs with: the caller's PATH (toon-client's
+ * launcher finds `node` on it) and an empty HOME. Every other variable is withheld,
+ * tokens included.
+ *
+ * @param {string} home an empty directory
+ * @param {Record<string, string | undefined>} [hostEnv]
+ * @returns {Record<string, string>}
+ */
+export function clientEnv(home, hostEnv = process.env) {
+  return { PATH: hostEnv.PATH ?? '', HOME: home };
+}
+
 /** Installs each client version once, into a temporary directory, and runs it there. */
 function realBinaries() {
+  const pins = JSON.parse(readFileSync(join(CHECKS, 'client-pins.json'), 'utf8'));
+  const home = mkdtempSync(join(tmpdir(), 'skill-commands-home-'));
   /** @type {Map<string, string>} */
   const installed = new Map();
   /** @type {(binary: string, version: string) => string} */
@@ -176,16 +263,21 @@ function realBinaries() {
       const target = `toon-v${version}-linux-${arch() === 'arm64' ? 'aarch64' : 'x86_64'}`;
       const url = `https://github.com/toon-protocol/toon_cli/releases/download/v${version}/${target}.tar.gz`;
       const tarball = join(dir, `${target}.tar.gz`);
+      // The expected hash comes from this repository, not from the release being checked.
+      const expected = pinnedSha256(pins, version, `${target}.tar.gz`);
       execFileSync('curl', ['-fsSL', '-o', tarball, url]);
-      const expected = execFileSync('curl', ['-fsSL', `${url}.sha256`], { encoding: 'utf8' }).split(/\s/)[0];
       const actual = createHash('sha256').update(readFileSync(tarball)).digest('hex');
-      if (actual !== expected) throw new Error(`${url} has SHA-256 ${actual}, not ${expected}.`);
+      if (actual !== expected) throw new Error(`${url} has SHA-256 ${actual}, not the pinned ${expected}.`);
       execFileSync('tar', ['xzf', tarball, '-C', dir]);
       return join(dir, target, 'toon');
     }
     if (binary === 'toon-client') {
+      // `npm ci` installs exactly the committed lockfile and fails on any integrity mismatch.
       // --ignore-scripts: the gate runs `--help`, so no package needs to run code at install time.
-      execFileSync('npm', ['install', '--ignore-scripts', '--no-audit', '--no-fund', '--prefix', dir, `@toon-protocol/client@${version}`], {
+      const locked = lockedClient(CHECKS, version);
+      for (const file of ['package.json', 'package-lock.json']) copyFileSync(join(locked, file), join(dir, file));
+      execFileSync('npm', ['ci', '--ignore-scripts', '--no-audit', '--no-fund'], {
+        cwd: dir,
         stdio: ['ignore', 'ignore', 'inherit'],
       });
       return join(dir, 'node_modules', '.bin', 'toon-client');
@@ -201,7 +293,7 @@ function realBinaries() {
       command = install(binary, version);
       installed.set(key, command);
     }
-    const run = spawnSync(command, [...path, '--help'], { encoding: 'utf8' });
+    const run = spawnSync(command, [...path, '--help'], { encoding: 'utf8', env: clientEnv(home) });
     if (run.error) throw run.error;
     return { exitCode: run.status ?? 1, stderr: run.stderr };
   };
