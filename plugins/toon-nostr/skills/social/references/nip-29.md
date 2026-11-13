@@ -10,8 +10,9 @@ nothing.
 
 - A write with an `h` tag must come from a member of that group. A write to a group that does not
   exist is refused with HTTP 404 `no such group`, and the paid write is still charged.
-- Moderation kinds `9000`, `9001`, `9002`, `9005` and `9008` need the `admin` role. A `moderator`
-  can add and remove plain members and delete events.
+- `9002` and `9008` need the `admin` role. A `moderator` may add and remove plain members
+  (`9000`, `9001`) and delete events (`9005`); granting a role, or touching another moderator,
+  needs an admin.
 - `9007` creates a group and makes its author an admin; it is refused if the group exists.
 - `9021` joins an open group at once. For a closed group the request is kept for the admins to
   read. `9022` leaves.
@@ -25,7 +26,7 @@ permissions.
 
 ## Kinds
 
-- Group id: `<relay host>'<group id>`; the `h` tag carries the id on every event.
+- Group id: on the TOON relay, put the bare group ID in the `h` tag, e.g. `["h","club"]`. The ID must be 1–64 characters from `a-z`, `0-9`, `-` or `_`.
 - `9` chat message in the group; `11` thread root, answered with NIP-22 `1111` comments. `["h","<group id>"]`.
 - `9021` join request, `9022` leave request. `["h","<group id>"]`, optional `content`.
 - Moderation, by an admin (a moderator only for plain members and deletions, as above): `9000` add
