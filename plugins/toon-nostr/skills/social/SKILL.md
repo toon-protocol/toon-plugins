@@ -130,7 +130,7 @@ filter to read with.
 | | 28 public chats (unrecommended upstream, try 29) | `references/nip-28.md` |
 | | 72 moderated communities (unrecommended upstream, try 29) | `references/nip-72.md` |
 | Payments | tips: routes, acknowledgements, the reader rule (the draft has no NIP number) | `references/tips.md` |
-| Marketplace | 99 classified listings | `references/nip-99.md` |
+| Marketplace | 99 classified listings (draft upstream) | `references/nip-99.md` |
 | Private | 17 private messages, with 44 and 59 | `references/nip-17.md` |
 | Housekeeping | 09 deletion | `references/nip-09.md` |
 | | 40 expiration | `references/nip-40.md` |
