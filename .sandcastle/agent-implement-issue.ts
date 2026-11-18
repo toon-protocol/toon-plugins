@@ -19,7 +19,11 @@
 // Required env:
 //   SANDCASTLE_ISSUE_NUMBER   the issue to work
 //   CLAUDE_CODE_OAUTH_TOKEN   authenticates Claude Code in the sandbox
-//   GH_TOKEN                  App installation token (contents, PRs and issues: write)
+//   GH_TOKEN                  App installation token (contents, PRs and issues: write).
+//                             Host only: the runner's own `gh` calls use it.
+//   SANDBOX_GH_TOKEN          App installation token with issues: write alone. It
+//                             becomes GH_TOKEN inside the sandbox (sandbox-secrets.ts).
+//                             Required on Actions.
 //   APP_ID, APP_PRIVATE_KEY   optional. Used to mint a fresh token before each push,
 //                             because installation tokens expire after an hour (toon-protocol/connector#462).
 //                             Host only: they are never forwarded into the sandbox.
@@ -63,10 +67,11 @@ const issue = JSON.parse(
 const hooks = {
   sandbox: {
     onSandboxReady: [
-      // The engine sets git identity but no credential helper, so a bare `git push`
-      // would be unauthenticated. `gh auth setup-git` makes git read GH_TOKEN at
-      // push time and stores no token on disk. Guarded so local runs without a
-      // token still start.
+      // `gh auth setup-git` makes git read GH_TOKEN and stores no token on disk.
+      // The sandbox's GH_TOKEN can only read and write issues, so an agent's own
+      // `git push` is refused; the runner pushes with its own credential
+      // (pushBranch). The second command drops the checkout action's auth header.
+      // Guarded so local runs without a token still start.
       {
         command:
           'if [ -n "$GH_TOKEN" ]; then gh auth setup-git; ' +
@@ -205,8 +210,8 @@ async function main() {
 
   const sandbox = await sandcastle.createSandbox({
     branch,
-    // Forwards CLAUDE_CODE_OAUTH_TOKEN and GH_TOKEN into the container (see
-    // ./sandbox-secrets.ts for why the engine would not otherwise).
+    // Forwards CLAUDE_CODE_OAUTH_TOKEN and the issues-only GH_TOKEN into the
+    // container (see ./sandbox-secrets.ts for why, and for which token).
     sandbox: docker({ env: sandboxSecrets() }),
     hooks,
   });

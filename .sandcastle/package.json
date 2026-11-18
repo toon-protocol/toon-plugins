@@ -6,7 +6,7 @@
   "scripts": {
     "ready": "tsx ready-issues.ts",
     "implement": "tsx agent-implement-issue.ts",
-    "test": "node --import tsx --test run-gate.test.ts",
+    "test": "node --import tsx --test run-gate.test.ts sandbox-secrets.test.ts",
     "typecheck": "tsc --noEmit --strict --module nodenext --moduleResolution nodenext --target es2022 --allowImportingTsExtensions --types node --skipLibCheck *.ts"
   },
   "dependencies": {

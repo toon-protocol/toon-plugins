@@ -28,19 +28,24 @@
 // container start (`startContainer` in dist/sandboxes -> chunk-CP3TYXZA.js:
 // `Object.entries(env).flatMap(([k, v]) => ["-e", `${k}=${v}`])`). Every
 // in-container exec then inherits them: claude-code (CLAUDE_CODE_OAUTH_TOKEN)
-// AND the implementer's in-sandbox `git push` / `gh pr create` (GH_TOKEN).
+// AND the agent's in-sandbox `gh issue view` / `gh issue comment` (GH_TOKEN).
 //
 // NOTE: a key is included ONLY when it is actually set on the host. This keeps
 // local dev working — there the tokens come from `.sandcastle/.env` (resolved
 // separately) and we must not clobber those with an `undefined` override, since
 // `mergeProviderEnv` layers sandbox-provider env OVER the resolved `.env` values.
 
-// Host env vars that must reach claude-code and `gh`/`git` inside the sandbox.
-const PASSTHROUGH_KEYS = [
-  'CLAUDE_CODE_OAUTH_TOKEN', // Claude Max-plan credential -> authenticates claude-code
-  'GH_TOKEN', // in-sandbox `git push` / `gh pr create` / `gh issue list`
-] as const;
-
+// WHICH GITHUB TOKEN THE SANDBOX GETS
+// -----------------------------------
+// The agents work from an issue and its comments, and anyone can write those. So
+// the container's GH_TOKEN is NOT the host's. The host's token can push and open
+// PRs; the container gets a separate one that can only read and write issues
+// (SANDBOX_GH_TOKEN, minted by agent-implement.yml with `issues: write` alone).
+// That is all an agent uses `gh` for: the prompts tell it to read the issue and
+// to comment on it, and not to push or open a PR. The runner does every push
+// itself, with a token it mints and stages for the length of one `git push`
+// (pushBranch in agent-implement-issue.ts).
+//
 // DELIBERATELY ABSENT: any wallet mnemonic or funded key. The tests here need none, and
 // this repository is public. Do not add one without re-reading the redaction step in
 // agent-implement.yml first.
@@ -50,16 +55,30 @@ const PASSTHROUGH_KEYS = [
 // holding the key (toon-protocol/connector#462).
 
 /**
- * The subset of {@link PASSTHROUGH_KEYS} that is set on the host, as a
- * `Record<string, string>` suitable for `docker({ env })`. Undefined vars are
- * omitted (never emitted as `KEY=undefined`) so the local `.sandcastle/.env`
- * path is not overridden with empties.
+ * The secrets to inject into the sandbox, as a `Record<string, string>` suitable
+ * for `docker({ env })`:
+ *
+ *   CLAUDE_CODE_OAUTH_TOKEN  the host's, when set. Authenticates claude-code.
+ *   GH_TOKEN                 the host's SANDBOX_GH_TOKEN, when set. Never the
+ *                            host's own GH_TOKEN.
+ *
+ * An unset variable is omitted (never emitted as `KEY=undefined`) so the local
+ * `.sandcastle/.env` path is not overridden with empties. On Actions there is
+ * no `.sandcastle/.env`, so a missing SANDBOX_GH_TOKEN throws: the run must not
+ * start with no token, and must never fall back to the one that can push.
  */
-export function sandboxSecrets(): Record<string, string> {
+export function sandboxSecrets(
+  host: Record<string, string | undefined> = process.env
+): Record<string, string> {
   const env: Record<string, string> = {};
-  for (const key of PASSTHROUGH_KEYS) {
-    const value = process.env[key];
-    if (value) env[key] = value;
+  if (host.CLAUDE_CODE_OAUTH_TOKEN) env.CLAUDE_CODE_OAUTH_TOKEN = host.CLAUDE_CODE_OAUTH_TOKEN;
+  if (host.SANDBOX_GH_TOKEN) {
+    env.GH_TOKEN = host.SANDBOX_GH_TOKEN;
+  } else if (host.GITHUB_ACTIONS === 'true') {
+    throw new Error(
+      'SANDBOX_GH_TOKEN is not set. The sandbox needs its own issues-only token ' +
+        '(see agent-implement.yml); the runner will not forward its own GH_TOKEN.'
+    );
   }
   return env;
 }

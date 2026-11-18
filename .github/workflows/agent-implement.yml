@@ -130,9 +130,9 @@ jobs:
       # A PR opened with the App token (unlike GITHUB_TOKEN) triggers ci.yml. This
       # token expires after an hour, so the runner mints a fresh one before each
       # push from APP_ID and APP_PRIVATE_KEY (toon-protocol/connector#462).
-      # This token is forwarded into the sandbox. Scope it to this repository (the
-      # action's default with no owner/repositories) and to the three permissions the
-      # runner uses, as mint-app-token.ts does for each push.
+      # This token stays on the host: the runner's own `gh` calls use it. Scope it to
+      # this repository (the action's default with no owner/repositories) and to the
+      # three permissions the runner uses, as mint-app-token.ts does for each push.
       - name: Generate GitHub App token
         id: app-token
         uses: actions/create-github-app-token@v2
@@ -143,13 +143,26 @@ jobs:
           permission-pull-requests: write
           permission-issues: write
 
+      # The token the agents hold. They work from issue text and comments, which anyone
+      # can write, so this one can read and write issues and nothing else: it cannot
+      # push, and it cannot open or edit a PR. The runner pushes with its own token.
+      - name: Generate the sandbox's issues-only token
+        id: sandbox-token
+        uses: actions/create-github-app-token@v2
+        with:
+          app-id: ${{ secrets.APP_ID }}
+          private-key: ${{ secrets.APP_PRIVATE_KEY }}
+          permission-issues: write
+
       - name: Run the implement runner
         timeout-minutes: 170
         env:
           SANDCASTLE_ISSUE_NUMBER: ${{ matrix.issue }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          # Host only. The sandbox gets SANDBOX_GH_TOKEN as its GH_TOKEN instead
+          # (.sandcastle/sandbox-secrets.ts), and the Claude token above.
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
-          # Host only: .sandcastle/sandbox-secrets.ts forwards just the two keys above.
+          SANDBOX_GH_TOKEN: ${{ steps.sandbox-token.outputs.token }}
           APP_ID: ${{ secrets.APP_ID }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         run: .sandcastle/node_modules/.bin/tsx .sandcastle/agent-implement-issue.ts
@@ -185,6 +198,7 @@ jobs:
         if: always()
         env:
           GH_TOKEN: ${{ steps.app-token.outputs.token }}
+          SANDBOX_GH_TOKEN: ${{ steps.sandbox-token.outputs.token }}
           CLAUDE_CODE_OAUTH_TOKEN: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
           APP_PRIVATE_KEY: ${{ secrets.APP_PRIVATE_KEY }}
         run: |
@@ -195,7 +209,8 @@ jobs:
 
           exact = sorted(
               (v for v in (os.environ.get(k, "") for k in
-                           ("GH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN", "APP_PRIVATE_KEY"))
+                           ("GH_TOKEN", "SANDBOX_GH_TOKEN", "CLAUDE_CODE_OAUTH_TOKEN",
+                            "APP_PRIVATE_KEY"))
                if v and len(v.strip()) >= 8),
               key=len, reverse=True,
           )
