@@ -33,7 +33,10 @@ no `ci.yml`, no such job, or no runnable step, the gate runs nothing and logs th
 Today `ci.yml`'s `gate` job runs `checks/skill-commands.mjs`, which fails when a skill
 names a `toon` or `toon-client` command that the lowest version in its sending skill's
 frontmatter range lacks, or names another plugin's binary. It fetches both clients, so the
-gate needs network access. Keep the job's `run:` steps free of `if:` and `${{ }}`: the gate
+gate needs network access. It runs only client bytes this repository pins
+(`checks/client-pins.json`, `checks/clients/`), with an environment of `PATH` and an empty
+`HOME`: when a sending skill's lower bound moves, add the pin in the same change (the top of
+`checks/skill-commands.mjs` says how). Keep the job's `run:` steps free of `if:` and `${{ }}`: the gate
 skips those.
 The rule lives in one place, `gateFromCi` in `.sandcastle/run-gate.ts`, tested by
 `.sandcastle/run-gate.test.ts`.

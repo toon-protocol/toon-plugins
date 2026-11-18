@@ -1,10 +1,11 @@
 import assert from 'node:assert/strict';
-import { mkdirSync, mkdtempSync, writeFileSync } from 'node:fs';
+import { mkdirSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
+import { fileURLToPath } from 'node:url';
 
-import { checkRepo, lowestVersion, namedCommands } from './skill-commands.mjs';
+import { checkRepo, clientEnv, CLIENTS, lockedClient, lowestVersion, namedCommands, pinnedSha256 } from './skill-commands.mjs';
 
 /** A repository holding `files` (path → text), as a directory. */
 function repo(files) {
@@ -106,4 +107,57 @@ test('a toon-client skill naming an unknown toon-client command, or a bare toon 
   assert.equal(problems.length, 2);
   assert.match(problems.join('\n'), /`toon-client frobnicate` is not a command of toon-client 5\.0\.0/);
   assert.match(problems.join('\n'), /names `toon send`, but only toon-cli skills may name `toon` commands/);
+});
+
+test('a toon_cli archive runs only when its SHA-256 is pinned in this repository', () => {
+  const pins = { toon: { '0.6.0': { 'toon-v0.6.0-linux-x86_64.tar.gz': 'ab'.repeat(32) } } };
+
+  assert.equal(pinnedSha256(pins, '0.6.0', 'toon-v0.6.0-linux-x86_64.tar.gz'), 'ab'.repeat(32));
+  assert.throws(() => pinnedSha256(pins, '0.6.0', 'toon-v0.6.0-linux-aarch64.tar.gz'), /no SHA-256 for toon-v0\.6\.0-linux-aarch64\.tar\.gz/);
+  assert.throws(() => pinnedSha256(pins, '0.7.0', 'toon-v0.7.0-linux-x86_64.tar.gz'), /checks\/client-pins\.json/);
+  assert.throws(
+    () => pinnedSha256({ toon: { '0.6.0': { 'toon-v0.6.0-linux-x86_64.tar.gz': 'not a hash' } } }, '0.6.0', 'toon-v0.6.0-linux-x86_64.tar.gz'),
+    /not a SHA-256/,
+  );
+});
+
+test('toon-client installs only from a committed lockfile that pins the requested version', () => {
+  const lock = (version) =>
+    JSON.stringify({ lockfileVersion: 3, packages: { 'node_modules/@toon-protocol/client': { version, integrity: 'sha512-x' } } });
+  const root = repo({
+    'checks/clients/toon-client-5.0.0/package.json': '{}',
+    'checks/clients/toon-client-5.0.0/package-lock.json': lock('5.0.0'),
+    'checks/clients/toon-client-5.1.0/package.json': '{}',
+    'checks/clients/toon-client-5.1.0/package-lock.json': lock('5.0.0'),
+  });
+
+  assert.equal(lockedClient(join(root, 'checks'), '5.0.0'), join(root, 'checks', 'clients', 'toon-client-5.0.0'));
+  assert.throws(() => lockedClient(join(root, 'checks'), '5.0.2'), /no lockfile for toon-client 5\.0\.2/);
+  assert.throws(() => lockedClient(join(root, 'checks'), '5.1.0'), /pins @toon-protocol\/client 5\.0\.0, not 5\.1\.0/);
+});
+
+test('a downloaded client runs with none of the caller\'s environment but PATH', () => {
+  const env = clientEnv('/tmp/empty-home', {
+    PATH: '/usr/bin',
+    HOME: '/home/agent',
+    GH_TOKEN: 'ghs_secret',
+    CLAUDE_CODE_OAUTH_TOKEN: 'secret',
+    NODE_OPTIONS: '--require /tmp/x.js',
+  });
+
+  assert.deepEqual(env, { PATH: '/usr/bin', HOME: '/tmp/empty-home' });
+});
+
+test('this repository pins the client versions its own sending skills state', () => {
+  const checks = dirname(fileURLToPath(import.meta.url));
+  const lowest = (plugin) => {
+    const { sendingSkill, rangeKey } = CLIENTS[plugin];
+    const skillFile = join(checks, '..', 'plugins', plugin, 'skills', sendingSkill, 'SKILL.md');
+    return lowestVersion(readFileSync(skillFile, 'utf8'), rangeKey);
+  };
+  const pins = JSON.parse(readFileSync(join(checks, 'client-pins.json'), 'utf8'));
+
+  const toon = lowest('toon-cli');
+  for (const cpu of ['x86_64', 'aarch64']) pinnedSha256(pins, toon, `toon-v${toon}-linux-${cpu}.tar.gz`);
+  lockedClient(checks, lowest('toon-client'));
 });

@@ -76,6 +76,8 @@ A data skill in `toon-nostr` hands off to the sending skill of your client. So:
   supports, and checks the installed version first.
 - **A skill names only commands its client has.** `checks/skill-commands.mjs` fetches both
   clients and fails CI otherwise ([`.github/workflows/ci.yml`](.github/workflows/ci.yml)).
+  It runs only the client builds this repository pins by hash, and gives them no
+  environment variables but `PATH`.
 
 ## How it fits together
 
