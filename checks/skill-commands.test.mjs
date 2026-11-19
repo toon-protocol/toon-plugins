@@ -4,7 +4,7 @@ import { tmpdir } from 'node:os';
 import { dirname, join } from 'node:path';
 import { test } from 'node:test';
 
-import { checkRepo, lowestVersion, namedCommands } from './skill-commands.mjs';
+import { checkRepo, lowestVersion, namedCommands, releasePlatform } from './skill-commands.mjs';
 
 /** A repository holding `files` (path → text), as a directory. */
 function repo(files) {
@@ -106,4 +106,15 @@ test('a toon-client skill naming an unknown toon-client command, or a bare toon 
   assert.equal(problems.length, 2);
   assert.match(problems.join('\n'), /`toon-client frobnicate` is not a command of toon-client 5\.0\.0/);
   assert.match(problems.join('\n'), /names `toon send`, but only toon-cli skills may name `toon` commands/);
+});
+
+test('picks the release asset for the host platform', () => {
+  assert.equal(releasePlatform('linux', 'x64'), 'linux-x86_64');
+  assert.equal(releasePlatform('linux', 'arm64'), 'linux-aarch64');
+  assert.equal(releasePlatform('darwin', 'arm64'), 'macos-aarch64');
+});
+
+test('fails with a clear message on a platform toon publishes no asset for', () => {
+  assert.throws(() => releasePlatform('darwin', 'x64'), /no release asset for macOS on x86_64/);
+  assert.throws(() => releasePlatform('win32', 'x64'), /no release asset for win32/);
 });

@@ -11,7 +11,7 @@
 import { execFileSync, spawnSync } from 'node:child_process';
 import { createHash } from 'node:crypto';
 import { existsSync, mkdtempSync, readdirSync, readFileSync } from 'node:fs';
-import { arch, tmpdir } from 'node:os';
+import { arch, platform, tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
@@ -165,6 +165,34 @@ function skillFiles(root, plugin) {
     .sort();
 }
 
+/**
+ * The release asset that carries `toon` for the host this check runs on, as the
+ * `<os>-<arch>` part of the asset name. `toon_cli` publishes one archive per
+ * platform, so a host that downloads the Linux archive on macOS gets a binary
+ * the host cannot run.
+ *
+ * @param {string} os the `os.platform()` value
+ * @param {string} cpu the `os.arch()` value
+ * @returns {string} the `<os>-<arch>` part, for example `linux-x86_64`
+ */
+export function releasePlatform(os = platform(), cpu = arch()) {
+  const arm = cpu === 'arm64';
+  if (os === 'linux') return arm ? 'linux-aarch64' : 'linux-x86_64';
+  if (os === 'darwin') {
+    if (!arm) {
+      throw new Error(
+        'toon publishes no release asset for macOS on x86_64. ' +
+          'Run this check on Apple Silicon, or on Linux, where toon is published.',
+      );
+    }
+    return 'macos-aarch64';
+  }
+  throw new Error(
+    `toon publishes no release asset for ${os}. ` +
+      'Run this check on Linux or on Apple Silicon macOS, where toon is published.',
+  );
+}
+
 /** Installs each client version once, into a temporary directory, and runs it there. */
 function realBinaries() {
   /** @type {Map<string, string>} */
@@ -173,7 +201,7 @@ function realBinaries() {
   const install = (binary, version) => {
     const dir = mkdtempSync(join(tmpdir(), `${binary}-${version}-`));
     if (binary === 'toon') {
-      const target = `toon-v${version}-linux-${arch() === 'arm64' ? 'aarch64' : 'x86_64'}`;
+      const target = `toon-v${version}-${releasePlatform()}`;
       const url = `https://github.com/toon-protocol/toon_cli/releases/download/v${version}/${target}.tar.gz`;
       const tarball = join(dir, `${target}.tar.gz`);
       execFileSync('curl', ['-fsSL', '-o', tarball, url]);
