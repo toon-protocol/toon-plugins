@@ -35,15 +35,34 @@ export const CLIENTS = {
  */
 export function namedCommands(text, binary) {
   const prefix = `${binary} `;
-  const spans = text
-    .split('`')
-    .filter((_, i) => i % 2 === 1)
-    .filter((span) => span.startsWith(prefix));
-  const lines = text
-    .split('\n')
-    .map((line) => line.trimStart())
-    .filter((line) => line.startsWith(prefix));
-  return [...spans, ...lines].map((named) => commandPath(named.slice(prefix.length)));
+  const named = [];
+  // A span names a command only if `<binary> ` follows its opening backtick. It may wrap
+  // across lines but not across a blank line or a code fence, and a stray backtick is
+  // harmless: it is never followed by the prefix, so it cannot pair with a later one.
+  const span = new RegExp('`(' + prefix.replace(/[.*+?^${}()|[\]\\]/g, '\\$&') + '[^`]*)`', 'g');
+  let inFence = false;
+  let paragraph = [];
+  const flush = () => {
+    for (const [, found] of paragraph.join('\n').matchAll(span)) named.push(found);
+    paragraph = [];
+  };
+  for (const raw of text.split('\n')) {
+    const line = raw.trimStart();
+    if (line.startsWith('```') || line.startsWith('~~~')) {
+      flush();
+      inFence = !inFence;
+      continue;
+    }
+    if (inFence) {
+      if (line.startsWith(prefix)) named.push(line);
+    } else if (line === '') {
+      flush();
+    } else {
+      paragraph.push(raw);
+    }
+  }
+  flush();
+  return named.map((n) => commandPath(n.slice(prefix.length)));
 }
 
 /** @param {string} rest */

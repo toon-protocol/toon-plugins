@@ -107,3 +107,18 @@ test('a toon-client skill naming an unknown toon-client command, or a bare toon 
   assert.match(problems.join('\n'), /`toon-client frobnicate` is not a command of toon-client 5\.0\.0/);
   assert.match(problems.join('\n'), /names `toon send`, but only toon-cli skills may name `toon` commands/);
 });
+
+test('a stray backtick does not hide later commands', () => {
+  const text = 'A lone ` in prose.\nRun `toon event publish`.';
+  assert.deepEqual(namedCommands(text, 'toon'), [['event', 'publish']]);
+});
+
+test('a span wrapped across lines is still collected', () => {
+  const text = 'Run `toon route\nlist` and `toon relay\n  config --yes`.';
+  assert.deepEqual(namedCommands(text, 'toon'), [['route', 'list'], ['relay', 'config']]);
+});
+
+test('a span does not run across a blank line', () => {
+  const text = 'Stray `toon send\n\nprose` and `toon probe`.';
+  assert.deepEqual(namedCommands(text, 'toon'), [['probe']]);
+});
