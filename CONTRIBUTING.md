@@ -20,6 +20,9 @@ which share this pool.
   it best (for example, the one with docs, or the one built on the library we prefer) and
   closes the others. That choice is the maintainer's, not a race. A pull request closed
   this way gets its submission fee back (see below).
+- Keep your pull request free of merge conflicts with the default branch. If a maintainer
+  asks you to resolve them and you have not done so within 7 days, the pull request is
+  closed.
 - Want to work on something that is not listed? Open an issue and ask first. Start the
   pull request only after a maintainer adds the `slop-wanted` label.
 - Pull requests opened before 22 November 2026 are not affected.
@@ -53,9 +56,9 @@ request on the same topic before you send another.
   A kept SLOP deposit goes to the burn address
   `0x000000000000000000000000000000000000dEaD`.
 - **Closes a `slop-wanted` issue but is closed without a merge:** the deposit is sent back,
-  because another pull request for the same issue was chosen. A maintainer keeps it only by
-  adding the label `slop-keep-fee`, for a pull request that does not really answer the
-  issue. The issue must have had the label before you opened the pull request.
+  for example when another pull request for the same issue was chosen. A maintainer keeps
+  it only by adding the label `slop-keep-fee`, for a pull request that does not really
+  answer the issue. The issue must have had the label before you opened the pull request.
 - An unpaid pull request is not closed for that reason. It waits without a Slopbot review.
 - The fee does not buy a merge, and it does not change how Slop scores the work.
 
