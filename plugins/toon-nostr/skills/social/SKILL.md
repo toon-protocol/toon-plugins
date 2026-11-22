@@ -1,6 +1,6 @@
 ---
 name: social
-description: "Take part in a community on TOON with the social NIPs: profiles, follows, notes and threads, reactions, reposts, comments, long-form posts, polls, highlights, tips, public chats, groups, communities, private messages, deletions, expiry, reports and content warnings. Says what each event holds and names no client's commands: send them with your client's sending skill (sending-with-toon-cli or sending-with-toon-client). Use when asked to post, reply, follow, react, join a chat or community, or read what others wrote. Load one reference per NIP, only when needed."
+description: "Take part in a community on TOON with the social NIPs: profiles, follows, notes and threads, reactions, reposts, comments, long-form posts, polls, highlights, calendar events and RSVPs, tips, public chats, groups, communities, private messages, deletions, expiry, reports and content warnings. Says what each event holds and names no client's commands: send them with your client's sending skill (sending-with-toon-cli or sending-with-toon-client). Use when asked to post, reply, follow, react, join a chat or community, schedule an event, invite someone, RSVP, or read what others wrote. Load one reference per NIP, only when needed."
 ---
 
 # Taking part in a community
@@ -126,6 +126,7 @@ filter to read with.
 | | 23 long-form content | `references/nip-23.md` |
 | | 88 polls | `references/nip-88.md` |
 | | 84 highlights | `references/nip-84.md` |
+| | 52 calendar events and RSVPs | `references/nip-52.md` |
 | Groups | 29 relay-based groups | `references/nip-29.md` |
 | | 28 public chats (unrecommended upstream, try 29) | `references/nip-28.md` |
 | | 72 moderated communities (unrecommended upstream, try 29) | `references/nip-72.md` |
