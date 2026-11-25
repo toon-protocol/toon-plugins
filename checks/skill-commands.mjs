@@ -129,15 +129,38 @@ function withoutComment(line) {
 
 /**
  * The commands of a shell span or line, split at `|`, `||`, `&&`, `&`, `;`, `(`, `$(` and `)`,
- * each without its leading space or a leading `do`, `then`, `else`, `!` or `time`.
+ * each without its leading space or a leading `do`, `then`, `else`, `!` or `time`. An operator
+ * counts only outside quotes and outside a `<...>` placeholder, where `|` means "or" (as in
+ * `<npub|hex>`) and a backslash quotes the next character, so a flag after one is still the
+ * command's.
  *
  * @param {string} line
  * @returns {string[]}
  */
 function shellCommands(line) {
-  return line
-    .split(/\|\||&&|\$\(|[|&;()]/)
-    .map((command) => command.trimStart().replace(/^(?:(?:do|then|else|time|!)\s+)+/, ''));
+  const parts = [];
+  let start = 0;
+  let quote = null;
+  let depth = 0;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    if (quote !== "'" && char === '\\') { i += 1; continue; }
+    if (quote === null && (char === "'" || char === '"')) { quote = char; continue; }
+    if (char === quote) { quote = null; continue; }
+    if (quote !== null) continue;
+    if (char === '<') { depth += 1; continue; }
+    if (char === '>') { depth = Math.max(0, depth - 1); continue; }
+    if (depth > 0) continue;
+    const two = line.slice(i, i + 2);
+    const end =
+      two === '||' || two === '&&' || two === '$(' ? i + 2 : /[|&;()]/.test(char) ? i + 1 : -1;
+    if (end === -1) continue;
+    parts.push(line.slice(start, i));
+    i = end - 1;
+    start = end;
+  }
+  parts.push(line.slice(start));
+  return parts.map((command) => command.trimStart().replace(/^(?:(?:do|then|else|time|!)\s+)+/, ''));
 }
 
 /**
@@ -190,26 +213,55 @@ function joinContinuations(text) {
  * The words of `rest` that are the command's own: those before a pipe, `&`, `;`, `)`, a
  * bare `--` or a shell comment. After `--` a word is an argument even when it looks like a
  * flag, and from a word that starts with an unquoted `#` to the end of the line the shell
- * reads a comment, so `toon send x # use --bogus` names no flag.
+ * reads a comment, so `toon send x # use --bogus` names no flag. An operator counts only
+ * outside quotes and outside a `<...>` placeholder, as in `shellCommands`.
  *
  * @param {string} rest
  */
 function ownWords(rest) {
   const words = [];
   let quote = null;
+  let depth = 0;
   for (const word of rest.split(/\s+/).filter(Boolean)) {
     if (quote === null && word.startsWith('#')) break;
-    quote = quoteAfter(word, quote);
+    const scanned = scanWord(word, quote, depth);
+    quote = scanned.quote;
+    depth = scanned.depth;
     if (word === '--') break;
-    const operator = word.search(/[|&;)]/);
-    if (operator === -1) {
+    if (scanned.operator === -1) {
       words.push(word);
       continue;
     }
-    if (operator > 0) words.push(word.slice(0, operator));
+    if (scanned.operator > 0) words.push(word.slice(0, scanned.operator));
     break;
   }
   return words.join(' ');
+}
+
+/**
+ * The first shell operator in `word` that is really one, with the quote open after the word
+ * and the `<...>` depth after it: an operator counts only outside quotes and outside a
+ * `<...>` placeholder, where `|` means "or" (as in `<npub|hex>`). A backslash quotes the next
+ * character, as in `quoteAfter`.
+ *
+ * @param {string} word
+ * @param {string | null} open
+ * @param {number} depth
+ */
+function scanWord(word, open, depth) {
+  let quote = open;
+  let level = depth;
+  for (let i = 0; i < word.length; i += 1) {
+    const char = word[i];
+    if (quote !== "'" && char === '\\') { i += 1; continue; }
+    if (quote === null && (char === "'" || char === '"')) { quote = char; continue; }
+    if (char === quote) { quote = null; continue; }
+    if (quote !== null) continue;
+    if (char === '<') { level += 1; continue; }
+    if (char === '>') { level = Math.max(0, level - 1); continue; }
+    if (level === 0 && /[|&;)]/.test(char)) return { operator: i, quote, depth: level };
+  }
+  return { operator: -1, quote, depth: level };
 }
 
 /**

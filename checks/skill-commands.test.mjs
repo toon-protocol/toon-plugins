@@ -232,6 +232,49 @@ test('a flag after a pipe, `&&`, `;`, `)` or a bare `--` is not the command\'s',
   assert.deepEqual(namedCommands(text, 'toon'), [['event', 'query'], ['x'], ['w']]);
 });
 
+test('a flag after a quoted shell operator, or after a placeholder pipe, is the command\'s', () => {
+  const text = [
+    'Run `toon send "a|b" --relay r` or `toon send \'x&&y\' --fee 1`.',
+    '```',
+    'toon tip send <npub|hex> --amount <n> --yes',
+    'toon send "a;b" --max-fee 3',
+    '```',
+  ].join('\n');
+
+  assert.deepEqual(namedFlags(text, 'toon'), [
+    { command: ['send'], flag: '--relay' },
+    { command: ['send'], flag: '--fee' },
+    { command: ['tip', 'send'], flag: '--amount' },
+    { command: ['tip', 'send'], flag: '--yes' },
+    { command: ['send'], flag: '--max-fee' },
+  ]);
+  assert.deepEqual(namedCommands(text, 'toon'), [['send'], ['send'], ['tip', 'send'], ['send']]);
+});
+
+test('an escaped pipe is a literal, not a shell operator', () => {
+  const text = 'Run `toon send x \\| tee out` and `toon send y --fee 1 \\| tee out`.';
+
+  assert.deepEqual(namedCommands(text, 'toon'), [
+    ['send', 'x'],
+    ['send', 'y'],
+  ]);
+  assert.deepEqual(namedFlags(text, 'toon'), [{ command: ['send', 'y'], flag: '--fee' }]);
+});
+
+test('a made-up flag after a placeholder pipe fails, instead of hiding from the check', async () => {
+  const root = repo({
+    'plugins/toon-cli/skills/sending-with-toon-cli/SKILL.md': sendingWithToonCli(
+      'Run `toon tip send <npub|hex> --amount 1 --made-up`.',
+    ),
+  });
+  const { runHelp } = binaries('toon@0.3.0 --version', 'toon@0.3.0 tip send --amount');
+
+  assert.deepEqual(await checkRepo(root, runHelp), [
+    'plugins/toon-cli/skills/sending-with-toon-cli/SKILL.md: `toon tip send --made-up` is not a flag' +
+      ' of toon 0.3.0 (neither `toon tip send --help` nor `toon --help` names it)',
+  ]);
+});
+
 test('a shell comment names no command or flag, but a quoted `#` is not one', () => {
   const text = [
     'Send it with `toon send g.toon.relay # use --bogus for X`.',
