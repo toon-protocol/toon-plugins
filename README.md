@@ -11,7 +11,7 @@ Install one plugin for the data and one for your client.
 [![License](https://img.shields.io/badge/license-MIT-blue?style=flat-square)](LICENSE)
 [![Platform](https://img.shields.io/badge/platform-Claude%20Code-lightgrey?style=flat-square)](.claude-plugin/marketplace.json)
 [![toon_cli](https://img.shields.io/badge/toon__cli-%3E%3D0.6%2C%20%3C0.7-c9a24a?style=flat-square)](https://github.com/toon-protocol/toon_cli)
-[![toon-client](https://img.shields.io/badge/toon--client-%3E%3D5.0.0%2C%20%3C8-c9a24a?style=flat-square)](https://github.com/toon-protocol/toon-client)
+[![toon-client](https://img.shields.io/badge/toon--client-%3E%3D5.0.0%2C%20%3C9-c9a24a?style=flat-square)](https://github.com/toon-protocol/toon-client)
 
 [**Install**](#three-steps) · [**Plugins**](#plugins) · [**Skills**](#skills) · [**Where the protocol lives**](#where-the-protocol-lives) · [**Reference**](#reference)
 
@@ -150,7 +150,7 @@ The skills don't define any protocol. NIP texts, per-app guides and Nostr decisi
 | --- | --- |
 | `toon-nostr` | `social`, `authoring-a-nip`, `git`, `compute`. |
 | `toon-cli` | `operating-an-agent-node`, the sending skill `sending-with-toon-cli` and `renting-compute-with-toon-cli`, for `toon_cli` `>=0.6, <0.7`. |
-| `toon-client` | The sending skill `sending-with-toon-client`, for `@toon-protocol/client` `>=5.0.0, <8`. |
+| `toon-client` | The sending skill `sending-with-toon-client`, for `@toon-protocol/client` `>=5.0.0, <9`. |
 
 The skills moved here from `toon_cli`
 ([toon_cli#263](https://github.com/toon-protocol/toon_cli/issues/263)). The plan is
