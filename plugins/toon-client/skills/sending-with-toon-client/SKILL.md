@@ -1,7 +1,7 @@
 ---
 name: sending-with-toon-client
 description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, send a private message, upload a blob to a TOON Blossom server, and pay a relay's subscribe route. Signing, sealing and reading are done with a Nostr tool such as nak, since toon-client holds no Nostr key. The sending skill the data skills (social, authoring-a-nip, git, compute) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
-toon-client: ">=5.0.0, <7"
+toon-client: ">=5.0.0, <8"
 ---
 
 # Sending with toon-client
