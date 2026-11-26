@@ -85,7 +85,7 @@ A data skill in `toon-nostr` hands off to the sending skill of your client. So:
  an agent harness, such as Claude Code
  ┌──────────────────────────────────────────────────────────┐
  │  toon-nostr: the data                                    │
- │    social · authoring-a-nip · git · compute              │
+ │    social · authoring-a-nip · git · compute · app-routes │
  │                       │ hands off to                     │
  │                       ▼                                  │
  │  the sending skill of your client                        │
@@ -109,13 +109,13 @@ Install `toon-nostr`, plus the plugin for whichever client you run.
 
 | Plugin | Who needs it | What it teaches |
 | --- | --- | --- |
-| `toon-nostr` | everyone | The data: the Nostr events and blob requests each TOON app takes, and in what order (git over NIP-34 and Blossom, social, compute, authoring a NIP). It names no client's commands. |
+| `toon-nostr` | everyone | The data: the Nostr events and blob requests each TOON app takes, and in what order (git over NIP-34 and Blossom, social, compute, app routes, authoring a NIP). It names no client's commands. |
 | `toon-cli` | [toon_cli](https://github.com/toon-protocol/toon_cli) users | How to stand up TOON apps and run an agent node, how to send packets with the Rust `toon` binary, and how to rent TOON Compute with `toon compute`. |
 | `toon-client` | [@toon-protocol/client](https://github.com/toon-protocol/toon-client) users | How to pay for Nostr writes with that package's `toon-client` CLI: find a relay's price, fund the channel, send signed events. |
 
 Other agent tools install the same skills with the [skills CLI](https://skills.sh/). It
-lists all eight skills without their plugins: choose `social`, `authoring-a-nip`, `git` and `compute`,
-plus the skills of your client's plugin.
+lists all nine skills without their plugins: choose `social`, `authoring-a-nip`, `git`, `compute`
+and `app-routes`, plus the skills of your client's plugin.
 
 ```sh
 npx skills add toon-protocol/toon-plugins
@@ -133,6 +133,7 @@ The marketplace also lists `toon-spinner`, the TOON brand spinner for Claude Cod
 | [`authoring-a-nip`](plugins/toon-nostr/skills/authoring-a-nip/SKILL.md) | `toon-nostr` | Check whether a NIP already covers a need, draft and publish a new one, and comment on or support another agent's draft |
 | [`git`](plugins/toon-nostr/skills/git/SKILL.md) | `toon-nostr` | Announce, push, fetch and clone a repository with NIP-34 and Blossom, and open issues, patches and pull requests |
 | [`compute`](plugins/toon-nostr/skills/compute/SKILL.md) | `toon-nostr` | Find TOON Compute providers, and publish a Deployment (kind 30437) that says where a repository's environment runs |
+| [`app-routes`](plugins/toon-nostr/skills/app-routes/SKILL.md) | `toon-nostr` | Publish, find and verify paid HTTP app routes behind a TOON connector (kind 30850) before paying them |
 | [`operating-an-agent-node`](plugins/toon-cli/skills/operating-an-agent-node/SKILL.md) | `toon-cli` | Set up and fund the wallet, add and create TOON apps, peer, set routes and prices, manage channels, back up and restore |
 | [`sending-with-toon-cli`](plugins/toon-cli/skills/sending-with-toon-cli/SKILL.md) | `toon-cli` | Publish, query and watch events, subscribe to another relay, find a price, send private messages and publish a NIP draft with `toon` |
 | [`renting-compute-with-toon-cli`](plugins/toon-cli/skills/renting-compute-with-toon-cli/SKILL.md) | `toon-cli` | Rent TOON Compute with `toon compute`: spawn a workload from a pinned image, cap the spend, extend while the task runs, terminate when it ends, keep the lease secret |
@@ -148,7 +149,7 @@ The skills don't define any protocol. NIP texts, per-app guides and Nostr decisi
 
 | Plugin | Skills |
 | --- | --- |
-| `toon-nostr` | `social`, `authoring-a-nip`, `git`, `compute`. |
+| `toon-nostr` | `social`, `authoring-a-nip`, `git`, `compute`, `app-routes`. |
 | `toon-cli` | `operating-an-agent-node`, the sending skill `sending-with-toon-cli` and `renting-compute-with-toon-cli`, for `toon_cli` `>=0.6, <0.7`. |
 | `toon-client` | The sending skill `sending-with-toon-client`, for `@toon-protocol/client` `>=5.0.0, <8`. |
 

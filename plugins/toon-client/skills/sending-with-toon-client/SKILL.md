@@ -1,12 +1,12 @@
 ---
 name: sending-with-toon-client
-description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, send a private message, upload a blob to a TOON Blossom server, and pay a relay's subscribe route. Signing, sealing and reading are done with a Nostr tool such as nak, since toon-client holds no Nostr key. The sending skill the data skills (social, authoring-a-nip, git, compute) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
+description: "Pay for Nostr writes with @toon-protocol/client's `toon-client` binary: find a relay's write route and price, open and fund the payment channel, send a signed event to the relay as one paid request, read the answer, send a private message, upload a blob to a TOON Blossom server, and pay a relay's subscribe route. Signing, sealing and reading are done with a Nostr tool such as nak, since toon-client holds no Nostr key. The sending skill the data skills (social, authoring-a-nip, git, compute, app-routes) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon-client. Run toon-client --version first."
 toon-client: ">=5.0.0, <8"
 ---
 
 # Sending with toon-client
 
-The data skills (`social`, `authoring-a-nip`, `git`, `compute`) say what goes in an event and which
+The data skills (`social`, `authoring-a-nip`, `git`, `compute`, `app-routes`) say what goes in an event and which
 relay it goes to, and name no client. This skill says how `toon-client`, the binary of
 [@toon-protocol/client](https://github.com/toon-protocol/toon-client), does each thing they ask
 for. It says nothing about what an event holds: that is the data skill's.
@@ -82,6 +82,7 @@ connector, with a warning.
 | Send a private message (paid, one write per wrap) | `nak gift wrap`, then `toon-client send` ("Private messages", below) |
 | Read your private messages | `nak req --auth <ws-url>`, then `nak gift unwrap` (below) |
 | Upload a blob to a TOON Blossom server (paid) | `toon-client send <upload-address> --connector <connector-url> --method PUT -H 'Authorization: Nostr <kind 24242>' --body-file <file>` ("Uploading to a Blossom server", below) |
+| Call a paid HTTP app route (paid) | `toon-client send <ilp-address> --connector <connector-url> --body-file <file>` ("App routes", below) |
 | Open the payment channel | `toon-client channel open --connector <connector-url> --deposit <base units>` |
 | Top up the channel (Base) | `toon-client channel deposit <base units> --connector <connector-url>` |
 | Read what the channel holds and what you have signed | `toon-client channel status --connector <connector-url>` |
@@ -379,6 +380,37 @@ sent straight to the server is refused with `403` (`uploads go through TOON`). R
   carries it.
 - **Renewing.** Uploading identical bytes again is a new paid upload. On a TOON Blossom server it
   extends what you hold: see the server's own rules for how long.
+
+## App routes
+
+`app-routes`'s route announcements (kind `30850`) and deletion requests (kind `5`) are queried with
+`nak req`, signed with `nak event`, and published with `toon-client send` as in "Publishing" above
+(checking the relay's write price and the operator's allowance first).
+
+To verify and call a route an announcement names:
+
+1. **Inspect the connector for free**: run `toon-client describe <connector-url> --json`, confirm
+   `edgeIdentity.publicKey` matches the event's `connector_seal_key` and `routes` lists an entry
+   with `prefix` equal to `ilp_address`, and read `price`, optional `pricePerKib` and optional
+   `request` from that entry. Calling `<ilp-address>` with `--connector <connector-url>` dials that
+   terminating connector directly with no intermediary hops (`toon-client probe` works only on a
+   channel you have already paid on).
+2. **Bound the cost**: compute `price + pricePerKib × ⌈bytes / 1024⌉` (counting one KiB more than
+   your headers and body fill when `pricePerKib` is set) and check `toon-client channel status
+   --connector <connector-url>` and the operator's allowance before opening, topping up or sending.
+3. **Send the HTTP request**: leave `--method` and `--target` out for a `POST` to the route's
+   handler itself (their defaults are `POST` and `''`). Pass `--method <verb>` for another verb,
+   `--target <subpath>` with **no leading `/`** for a path beneath the handler (for example
+   `--target v1/ocr`; a subpath starting with `/` other than bare `/` is refused by the connector
+   with `F00`), `-H '<name>: <value>'` for headers, and `--body-file <file>` or `--body <text>`
+   (adding `--json-body` when the body is JSON):
+
+   ```
+   toon-client send <ilp-address> --connector <connector-url> --json-body --body-file request.json --json
+   ```
+
+   Every HTTP status the app returns (`4xx` and `5xx` included) rides back fulfilled and costs the
+   route price.
 
 ## A relay's paid live feed
 
