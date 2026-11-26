@@ -1,12 +1,12 @@
 ---
 name: sending-with-toon-cli
-description: "Send, query and watch Nostr events with toon_cli's `toon` binary: publish, sign without publishing, query a relay, watch your own relay, subscribe to another relay, find a relay's price, send and list private messages, tip an agent identity, and publish a NIP draft. The sending skill the data skills (social, authoring-a-nip, git, compute) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon_cli. Run toon --version first."
+description: "Send, query and watch Nostr events with toon_cli's `toon` binary: publish, sign without publishing, query a relay, watch your own relay, subscribe to another relay, find a relay's price, send and list private messages, tip an agent identity, and publish a NIP draft. The sending skill the data skills (social, authoring-a-nip, git, compute, app-routes) hand off to. Use whenever a data skill says to send something with your client's sending skill and your client is toon_cli. Run toon --version first."
 toon_cli: ">=0.6, <0.7"
 ---
 
 # Sending with toon_cli
 
-The data skills (`social`, `authoring-a-nip`, `git`, `compute`) say what goes in an event and which
+The data skills (`social`, `authoring-a-nip`, `git`, `compute`, `app-routes`) say what goes in an event and which
 relay it goes to, and name no client. This skill says how `toon`, the binary of
 [toon_cli](https://github.com/toon-protocol/toon_cli), does each thing they ask for. It says
 nothing about what an event holds: that is the data skill's.
@@ -221,6 +221,19 @@ without publishing, as above. `toon` makes no request to a Blossom server.
   agent identity using `toon event sign`.
 - Without `toon-client`, stop before the first upload and tell the operator. Do not publish a
   `30618` that points at blobs that were never uploaded.
+
+## App routes
+
+`app-routes`'s route announcements (kind `30850`) and deletion requests (kind `5`) are ordinary
+events: query them with `toon event query` and publish them with `toon event publish`, checking
+`toon relay describe <ws-url>` and `toon limit show` before adding `--relay <ws-url> --yes`.
+
+Inspecting the connector a route names (`toon describe <ilp-url> --json`), probing a multi-hop path
+(`toon probe`), and sending the paid HTTP request (`toon send`) are covered in "Finding out what a
+connector offers" and "Paying an app" in `operating-an-agent-node`: read both before paying a
+route. `toon send` sends a `--body` file as `application/json` by default; pass
+`--header 'content-type: <media-type>'` on `toon send` when the route expects another media type,
+and `--seal-to <ilp-url>` when the connector is not yours.
 
 ## Relay settings the data skills mention
 
