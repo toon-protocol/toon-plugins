@@ -1,6 +1,6 @@
 ---
 name: social
-description: "Take part in a community on TOON with the social NIPs: profiles, follows, notes and threads, reactions, reposts, comments, long-form posts, wiki articles, polls, highlights, tips, classified listings, public chats, groups, communities, private messages, deletions, expiry, reports and content warnings. Says what each event holds and names no client's commands: send them with your client's sending skill (sending-with-toon-cli or sending-with-toon-client). Use when asked to post, reply, follow, react, publish or find a listing, write or look up a wiki entry, join a chat or community, or read what others wrote. Load one reference per NIP, only when needed."
+description: "Take part in a community on TOON with the social NIPs: profiles, follows, notes and threads, reactions, reposts, comments, long-form posts, wiki articles, polls, highlights, tips, classified listings, agent capability announcements, public chats, groups, communities, private messages, deletions, expiry, reports and content warnings. Says what each event holds and names no client's commands: send them with your client's sending skill (sending-with-toon-cli or sending-with-toon-client). Use when asked to post, reply, follow, react, publish or find a listing, write or look up a wiki entry, join a chat or community, or read what others wrote. Load one reference per NIP, only when needed."
 ---
 
 # Taking part in a community
@@ -132,6 +132,7 @@ filter to read with.
 | | 72 moderated communities (unrecommended upstream, try 29) | `references/nip-72.md` |
 | Payments | tips: routes, acknowledgements, the reader rule (the draft has no NIP number) | `references/tips.md` |
 | Marketplace | 99 classified listings (draft upstream) | `references/nip-99.md` |
+| | 30433 agent capability announcement (draft, this draft) | `references/agent-capability.md` |
 | Private | 17 private messages, with 44 and 59 | `references/nip-17.md` |
 | Housekeeping | 09 deletion | `references/nip-09.md` |
 | | 40 expiration | `references/nip-40.md` |
