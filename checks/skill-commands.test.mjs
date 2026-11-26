@@ -8,6 +8,7 @@ import { fileURLToPath } from 'node:url';
 import {
   checkRepo,
   clientEnv,
+  hasUnbalancedBacktick,
   inlineSpans,
   lockedClient,
   lowestSupportedVersion,
@@ -458,4 +459,28 @@ test('picks the release asset for the host platform', () => {
 test('fails with a clear message on a platform toon publishes no asset for', () => {
   assert.throws(() => releasePlatform('darwin', 'x64'), /no release asset for macOS on x86_64/);
   assert.throws(() => releasePlatform('win32', 'x64'), /no release asset for win32/);
+});
+
+test('a stray backtick outside a code fence is flagged', () => {
+  assert.equal(hasUnbalancedBacktick('A lone ` in prose.\nRun `toon event publish`.'), true);
+  assert.equal(hasUnbalancedBacktick('The `toon binary is here, then `toon foo` later.'), true);
+});
+
+test('balanced backticks, and backticks inside a code fence, are not flagged', () => {
+  assert.equal(hasUnbalancedBacktick('Run `toon event publish` and `toon probe`.'), false);
+  assert.equal(hasUnbalancedBacktick('Text.\n```\ntoon a ` b\n```\nRun `toon c`.'), false);
+  assert.equal(hasUnbalancedBacktick('~~~\ntoon a `\n~~~\n'), false);
+});
+
+test('a skill file with a stray backtick fails the check instead of hiding commands', async () => {
+  const root = repo({
+    'plugins/toon-cli/skills/sending-with-toon-cli/SKILL.md': sendingWithToonCli('`toon --version`'),
+    'plugins/toon-cli/skills/operating-an-agent-node/SKILL.md': 'A lone ` in prose.\nRun `toon event publish`.',
+  });
+  const { runHelp } = binaries('toon@0.3.0', 'toon@0.3.0 event publish');
+
+  const problems = await checkRepo(root, runHelp);
+
+  assert.ok(problems.some((problem) => /^plugins\/toon-cli\/skills\/operating-an-agent-node\/SKILL.md: unbalanced backtick/.test(problem)));
+  assert.match(problems[0], /^plugins\/toon-cli\/skills\/operating-an-agent-node\/SKILL\.md: unbalanced backtick/);
 });

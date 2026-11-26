@@ -328,6 +328,27 @@ export function lowestSupportedVersion(root, plugin) {
 }
 
 /**
+ * True when the backticks outside code fences do not pair up, i.e. a stray one is
+ * present. `namedCommands` pairs backticks by position, so a stray one would hide
+ * every command after it; the check refuses the file instead of guessing.
+ *
+ * @param {string} text
+ */
+export function hasUnbalancedBacktick(text) {
+  let inFence = false;
+  let count = 0;
+  for (const raw of text.split('\n')) {
+    const line = raw.trimStart();
+    if (line.startsWith('```') || line.startsWith('~~~')) {
+      inFence = !inFence;
+      continue;
+    }
+    if (!inFence) count += (line.match(/`/g) ?? []).length;
+  }
+  return count % 2 === 1;
+}
+
+/**
  * Every problem with the commands the skills under `root/plugins` name, one line each.
  * No problems means the check passes.
  *
@@ -342,6 +363,11 @@ export async function checkRepo(root, runHelp) {
       path,
       text: readFileSync(join(root, path), 'utf8'),
     }));
+    for (const { path, text } of files) {
+      if (hasUnbalancedBacktick(text)) {
+        problems.push(`${path}: unbalanced backtick, so the commands it names cannot be read reliably`);
+      }
+    }
     for (const [owner, client] of Object.entries(CLIENTS)) {
       const named = files.flatMap(({ path, text }) =>
         namedCommands(text, client.binary).map((command) => ({ path, command })),
