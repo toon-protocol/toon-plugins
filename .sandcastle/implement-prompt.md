@@ -45,6 +45,14 @@ real funds, or it needs a credential that no workflow exposes. In that case, com
 and explain what blocks you in a comment on the issue (`gh issue comment {{ISSUE_NUMBER}}`).
 The runner moves an issue with no commits to `needs-triage`.
 
+The issues-only token in this sandbox is a GitHub App installation token, which expires about
+an hour after the run mints it, and the run step allows 170 minutes
+(`.github/workflows/agent-implement.yml`). A `gh issue view` or `gh issue comment` late in a
+long run can therefore fail with 401. Do not retry it in a loop and do not look for another
+way in: write what blocked you to `.sandcastle/logs/handoff-{{ISSUE_NUMBER}}.md`, commit it
+with `git add -f`, and output `<promise>BLOCKED</promise>` with the 401 in your last message,
+so the run ends with your work on the branch and the reason in the log the runner keeps.
+
 If your context is getting full (around 150k tokens) before you are done, commit what works,
 write the remaining steps to `.sandcastle/logs/handoff-{{ISSUE_NUMBER}}.md`, commit it with
 `git add -f`, and end your turn. A fresh session continues from your commits.
@@ -52,5 +60,6 @@ write the remaining steps to `.sandcastle/logs/handoff-{{ISSUE_NUMBER}}.md`, com
 When the ticket is done and committed, output <promise>COMPLETE</promise>.
 
 If you stopped because you're blocked, output <promise>BLOCKED</promise> instead, after your
-comment on the issue. The runner then ends the run. Otherwise it starts another session, which
-hits the same blocker and posts the same comment again.
+comment on the issue — or, when the token has expired and that comment cannot be posted,
+after the handoff log that says what blocked you. The runner then ends the run. Otherwise it
+starts another session, which hits the same blocker and posts the same comment again.
